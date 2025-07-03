@@ -1,0 +1,186 @@
+
+{
+  "common": {
+    "login": "Login",
+    "logout": "Logout",
+    "dashboard": "Dashboard",
+    "submit": "Submit",
+    "send_message": "Message Bhejein",
+    "learn_more": "Aur Jaanein",
+    "view_all_courses": "Saare Course Dekhein",
+    "view_details": "Details Dekhein",
+    "pay_now": "Abhi Pay Karein",
+    "get_admission": "Admission Lein",
+    "submit_application": "Application Submit Karein"
+  },
+  "nav": {
+    "home": "Home",
+    "courses": "Courses",
+    "about": "Hamare Baare Mein",
+    "contact": "Contact"
+  },
+  "welcome_modal": {
+    "title": "JTI Godda mein aapka Swagat hai!",
+    "greeting": "Namaste! Chaliye, aapko hamari tech ki duniya explore karne ke liye set up karte hain.",
+    "name_label": "Naam",
+    "name_placeholder": "Aapka Naam",
+    "language_label": "Bhasha",
+    "course_label": "Kisme interest hai?",
+    "course_placeholder": "Ek course chunein",
+    "start_exploring": "Explore Karna Shuru Karein"
+  },
+  "home_page": {
+    "hero_title": "JTI Godda ke saath apna Future Unlock karein",
+    "hero_subtitle": "Technology mein ek safal career ke liye aapka gateway. Hum next generation ke IT professionals ko empower karne ke liye top-tier computer education dete hain.",
+    "explore_courses": "Courses Explore Karein",
+    "contact_us": "Humse Contact Karein",
+    "why_jti_title": "JTI Kyun Chunein?",
+    "why_jti_subtitle": "Hum practical skills aur career readiness par focus ke saath best learning experience dene ke liye committed hain.",
+    "expert_instructors_title": "Expert Instructors",
+    "expert_instructors_desc": "Anubhavi industry professionals se seekhein jo padhane ke liye passionate hain.",
+    "practical_curriculum_title": "Practical Curriculum",
+    "practical_curriculum_desc": "Hamare courses hands-on experience aur real-world skills dene ke liye design kiye gaye hain.",
+    "job_assistance_title": "Job Assistance",
+    "job_assistance_desc": "Hum graduation ke baad aapko apna career launch karne mein madad ke liye placement support dete hain.",
+    "featured_courses_title": "Featured Courses",
+    "featured_courses_subtitle": "Hamare sabse popular courses ke saath shuruaat karein, jo sabhi skill levels ke liye design kiye gaye hain.",
+    "testimonials_title": "Hamare Students Kya Kehte Hain",
+    "testimonial1_text": "\"JTI Godda ne mujhe IT mein apna career shuru karne ke liye skills aur confidence diya. Instructors bahut achhe hain aur hamesha madad ke liye taiyar rehte hain.\"",
+    "testimonial1_author": "- Priya S., ADCA Graduate",
+    "testimonial2_text": "\"Tally seekhne ka practical approach zabardast tha. Maine apna course poora karne ke turant baad ek accountant ki job le li.\"",
+    "testimonial2_author": "- Rohan K., Tally Graduate"
+  },
+  "courses_page": {
+    "title": "Hamare Courses",
+    "subtitle": "Technology mein apne career ko kickstart ya advance karne ke liye perfect course dhundhein."
+  },
+  "about_page": {
+    "title": "JTI Godda ke Baare Mein",
+    "subtitle": "2001 se quality technical education ke zariye Jharkhand ke youth ko empower kar rahe hain.",
+    "mission_title": "Hamara Mission",
+    "mission_desc": "Godda aur aas-paas ke areas ke students ko accessible, affordable, aur high-quality computer education dena. Hamara maqsad unhe hamesha badalte IT industry mein safal hone ke liye zaroori practical skills aur knowledge se लैस karna hai.",
+    "history_title": "Hamari History",
+    "history_desc": "12 January, 2001 ko sthapit, Jharkhand Technical Institute (JTI) Private Limited digital divide ko kam karne ke vision ke saath shuru hua tha. Pichhle do dashakon mein, humne hazaron students ko safaltapoorvak train kiya hai, unhe jobs paane aur ek achha career banane mein madad ki hai.",
+    "corporate_info_title": "Hamari Corporate Pehchan",
+    "corporate_info_subtitle": "Hum transparency ke saath kaam karte hain aur ek registered private limited company hain.",
+    "location_title": "Hamara Location",
+    "basic_info": {
+      "title": "Basic Jaankari",
+      "cin": "CIN",
+      "inc_date": "Incorporation Date",
+      "inc_date_value": "January 12, 2001"
+    },
+    "capital_info": {
+      "title": "Key Numbers",
+      "authorised_capital": "Authorised Share Capital",
+      "paidup_capital": "Paid-up Share Capital"
+    },
+    "directors_title": "Hamare Directors",
+    "directors_subtitle": "JTI Godda ko behtareen banane wali leadership team se milein.",
+    "directors": {
+      "mritunjay": { "name": "Mr. Mritunjay Prasad", "role": "Director" },
+      "sadanand": { "name": "Mr. Sada Nand Verma", "role": "Director" }
+    }
+  },
+  "contact_page": {
+    "title": "Humse Judein",
+    "subtitle": "Hum yahan madad ke liye hain! Agar aapke paas hamare courses ke baare mein sawaal hain ya guidance chahiye, to bejhijhak sampark karein.",
+    "info_title": "Contact Information",
+    "address_title": "Hamara Pata",
+    "address_value": "H/O- Mritunjay Prasad, Pathra Road, Sarkanda, PS-Godda Mufsil, Godda, Jharkhand 814133",
+    "email_title": "Hamein Email Karein",
+    "email_value": "info@jtigodda.com",
+    "call_title": "Hamein Call Karein",
+    "call_value": "+91 12345 67890",
+    "form_title": "Hamein ek Message Bhejein"
+  },
+  "contact_form": {
+    "name_label": "Poora Naam",
+    "name_placeholder": "John Doe",
+    "email_label": "Email Address",
+    "email_placeholder": "you@example.com",
+    "subject_label": "Subject",
+    "subject_placeholder": "Course Inquiry",
+    "message_label": "Message",
+    "message_placeholder": "Bataein hum kaise madad kar sakte hain...",
+    "success_title": "Message Bhej Diya Gaya!",
+    "success_desc": "Humse contact karne ke liye dhanyavaad. Hum jald hi aapse sampark karenge."
+  },
+  "login_page": {
+    "title": "Student Login",
+    "description": "Apne account mein login karne ke liye neeche apna email daalein",
+    "no_account_admission": "Admission lena chahte hain?",
+    "admission_link": "Abhi Apply Karein",
+    "email_label": "Email",
+    "email_placeholder": "m@example.com",
+    "password_label": "Password",
+    "password_placeholder": "••••••••",
+    "forgot_password": "Password bhool gaye?",
+    "success_title": "Login Successful",
+    "success_desc": "Aapko aapke dashboard par redirect kiya ja raha hai..."
+  },
+  "admission_page": {
+    "title": "Admission Application Form",
+    "description": "Apply karne ke liye neeche diya gaya form bharein. Aapki application hamari team dwara review ki jayegi.",
+    "have_account": "Pehle se account hai?",
+    "login_link": "Login karein",
+    "name_label": "Poora Naam",
+    "name_placeholder": "John Doe",
+    "email_label": "Email",
+    "email_placeholder": "m@example.com",
+    "password_label": "Password",
+    "password_placeholder": "••••••••",
+    "father_name_label": "Pita ka Naam",
+    "father_name_placeholder": "Pita ka poora naam",
+    "dob_label": "Janm Tithi",
+    "phone_label": "Phone Number",
+    "phone_placeholder": "+91 12345 67890",
+    "address_label": "Poora Pata",
+    "address_placeholder": "Aapka poora address",
+    "qualification_label": "Aakhri Qualification",
+    "qualification_placeholder": "Jaise 12th Pass, B.A.",
+    "course_label": "Course Chunein",
+    "course_placeholder": "Apply karne ke liye ek course chunein",
+    "success_title": "Application Submitted!",
+    "success_desc": "Aapke application ke liye dhanyavaad. Hum isse review karenge aur jald hi aapse sampark karenge."
+  },
+  "dashboard_page": {
+    "welcome": "Welcome, {name}!",
+    "subtitle": "Yahan JTI Godda ke saath aapki profile aur billing ka overview hai.",
+    "profile_title": "Meri Profile",
+    "profile_desc": "Aapki personal aur academic jaankari.",
+    "card_title": "Mere Bills & Payments",
+    "card_desc": "Apne invoices aur payment status track karein.",
+    "table_header_date": "Date",
+    "table_header_bill_no": "Bill #",
+    "table_header_status": "Status",
+    "table_header_amount": "Amount",
+    "table_header_action": "Action",
+    "fee_status_paid": "Paid",
+    "fee_status_due": "Unpaid",
+    "no_bills": "Aapke paas abhi tak koi bills nahi hain.",
+    "payment_toast_title": "Payment Gateway",
+    "payment_toast_desc": "Aapko bill {billNumber} ke liye pay karne ke liye redirect kiya ja raha hai. (Yeh ek demo hai)",
+    "pay_online": "Online Pay Karein"
+  },
+  "footer": {
+      "copyright": "© {year} JTI. All rights reserved."
+  },
+  "courses_data": {
+    "cca": { "title": "Certificate in Computer Application (CCA)", "description": "Computer operations aur zaroori office apps ka 3-mahine ka intro course." },
+    "dca": { "title": "Diploma in Computer Application (DCA)", "description": "Computer fundamentals, MS Office, aur internet skills par 6-mahine ka course." },
+    "adca": { "title": "Advanced Diploma in Computer Application (ADCA)", "description": "1-saal ka program jisme DCA, Tally, DTP, aur C programming ka intro shamil hai." },
+    "tally": { "title": "Tally Prime with GST", "description": "Accounting aur GST ke liye Tally Prime mein 3-mahine ka specialized course." },
+    "dtp": { "title": "Desktop Publishing (DTP)", "description": "Photoshop, CorelDRAW, aur PageMaker ke saath professional layout design seekhein." },
+    "typing_en": { "title": "English Typing Course", "description": "Structured lessons ke saath fast aur accurate English typing skills develop karein." },
+    "typing_hi": { "title": "Hindi Typing (Mangal/Krutidev)", "description": "Professional kaam ke liye Mangal aur Krutidev fonts par Hindi typing mein master banein." },
+    "web": { "title": "Web Development Basics", "description": "Web development ka introduction jisme HTML, CSS, aur JavaScript cover kiya gaya hai." },
+    "python": { "title": "Python Programming", "description": "Versatile Python language seekhein, basic syntax se lekar advanced topics tak." },
+    "java": { "title": "Java Programming", "description": "Majboot, enterprise-level applications banane ke liye Java mein gehri jaankari." },
+    "cpp": { "title": "C++ Programming", "description": "High-performance applications aur systems programming ke liye C++ mein master banein." },
+    "cs11": { "title": "Computer Science (Class 11th)", "description": "Class 11th Computer Science ke liye CBSE/JAC curriculum-based coaching." },
+    "cs12": { "title": "Computer Science (Class 12th)", "description": "Class 12th Computer Science board exams ke liye advanced coaching." },
+    "it": { "title": "Information Technology (IT)", "description": "Hardware, software, aur networking jaise IT fundamentals ko cover karne wala ek broad course." },
+    "ites": { "title": "IT Enabled Services (ITES)", "description": "BPO, KPO, aur doosre business processes jaise IT-enabled services ke baare mein seekhein." }
+  }
+}

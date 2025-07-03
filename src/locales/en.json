@@ -1,0 +1,186 @@
+
+{
+  "common": {
+    "login": "Login",
+    "logout": "Logout",
+    "dashboard": "Dashboard",
+    "submit": "Submit",
+    "send_message": "Send Message",
+    "learn_more": "Learn More",
+    "view_all_courses": "View All Courses",
+    "view_details": "View Details",
+    "pay_now": "Pay Now",
+    "get_admission": "Get Admission",
+    "submit_application": "Submit Application"
+  },
+  "nav": {
+    "home": "Home",
+    "courses": "Courses",
+    "about": "About Us",
+    "contact": "Contact"
+  },
+  "welcome_modal": {
+    "title": "Welcome to JTI Godda!",
+    "greeting": "Hi there! Let's get you set up to explore our world of technology.",
+    "name_label": "Name",
+    "name_placeholder": "Your Name",
+    "language_label": "Language",
+    "course_label": "Interested in?",
+    "course_placeholder": "Select a course",
+    "start_exploring": "Start Exploring"
+  },
+  "home_page": {
+    "hero_title": "Unlock Your Future with JTI Godda",
+    "hero_subtitle": "Your gateway to a successful career in technology. We provide top-tier computer education to empower the next generation of IT professionals.",
+    "explore_courses": "Explore Courses",
+    "contact_us": "Contact Us",
+    "why_jti_title": "Why Choose JTI?",
+    "why_jti_subtitle": "We are committed to providing the best learning experience with a focus on practical skills and career readiness.",
+    "expert_instructors_title": "Expert Instructors",
+    "expert_instructors_desc": "Learn from experienced industry professionals who are passionate about teaching.",
+    "practical_curriculum_title": "Practical Curriculum",
+    "practical_curriculum_desc": "Our courses are designed to provide hands-on experience and real-world skills.",
+    "job_assistance_title": "Job Assistance",
+    "job_assistance_desc": "We provide placement support to help you launch your career after graduation.",
+    "featured_courses_title": "Featured Courses",
+    "featured_courses_subtitle": "Get started with our most popular courses, designed for all skill levels.",
+    "testimonials_title": "What Our Students Say",
+    "testimonial1_text": "\"JTI Godda provided me with the skills and confidence to start my career in IT. The instructors are amazing and always ready to help.\"",
+    "testimonial1_author": "- Priya S., ADCA Graduate",
+    "testimonial2_text": "\"The practical approach to learning Tally was fantastic. I landed a job as an accountant immediately after completing my course.\"",
+    "testimonial2_author": "- Rohan K., Tally Graduate"
+  },
+  "courses_page": {
+    "title": "Our Courses",
+    "subtitle": "Find the perfect course to kickstart or advance your career in technology."
+  },
+  "about_page": {
+    "title": "About JTI Godda",
+    "subtitle": "Empowering Jharkhand's youth through quality technical education since 2001.",
+    "mission_title": "Our Mission",
+    "mission_desc": "To provide accessible, affordable, and high-quality computer education to students in Godda and surrounding areas. We aim to equip them with the practical skills and knowledge needed to succeed in the ever-evolving IT industry.",
+    "history_title": "Our History",
+    "history_desc": "Established on January 12, 2001, Jharkhand Technical Institute Private Limited was founded with the vision of bridging the digital divide. Over the past two decades, we have successfully trained thousands of students, helping them secure jobs and build fulfilling careers.",
+    "corporate_info_title": "Our Corporate Identity",
+    "corporate_info_subtitle": "We operate with transparency and are a registered private limited company.",
+    "location_title": "Our Location",
+    "basic_info": {
+      "title": "Basic Information",
+      "cin": "CIN",
+      "inc_date": "Incorporation Date",
+      "inc_date_value": "January 12, 2001"
+    },
+    "capital_info": {
+      "title": "Key Numbers",
+      "authorised_capital": "Authorised Share Capital",
+      "paidup_capital": "Paid-up Share Capital"
+    },
+    "directors_title": "Our Directors",
+    "directors_subtitle": "Meet the leadership team steering JTI Godda towards excellence.",
+    "directors": {
+      "mritunjay": { "name": "Mr. Mritunjay Prasad", "role": "Director" },
+      "sadanand": { "name": "Mr. Sada Nand Verma", "role": "Director" }
+    }
+  },
+  "contact_page": {
+    "title": "Get In Touch",
+    "subtitle": "We're here to help! Whether you have questions about our courses or need guidance, feel free to reach out.",
+    "info_title": "Contact Information",
+    "address_title": "Our Address",
+    "address_value": "H/O- Mritunjay Prasad, Pathra Road, Sarkanda, PS-Godda Mufsil, Godda, Jharkhand 814133",
+    "email_title": "Email Us",
+    "email_value": "info@jtigodda.com",
+    "call_title": "Call Us",
+    "call_value": "+91 12345 67890",
+    "form_title": "Send us a Message"
+  },
+  "contact_form": {
+    "name_label": "Full Name",
+    "name_placeholder": "John Doe",
+    "email_label": "Email Address",
+    "email_placeholder": "you@example.com",
+    "subject_label": "Subject",
+    "subject_placeholder": "Course Inquiry",
+    "message_label": "Message",
+    "message_placeholder": "Tell us how we can help...",
+    "success_title": "Message Sent!",
+    "success_desc": "Thank you for contacting us. We will get back to you shortly."
+  },
+  "login_page": {
+    "title": "Student Login",
+    "description": "Enter your email below to login to your account",
+    "no_account_admission": "Want to get admission?",
+    "admission_link": "Apply Now",
+    "email_label": "Email",
+    "email_placeholder": "m@example.com",
+    "password_label": "Password",
+    "password_placeholder": "••••••••",
+    "forgot_password": "Forgot your password?",
+    "success_title": "Login Successful",
+    "success_desc": "Redirecting to your dashboard..."
+  },
+  "admission_page": {
+    "title": "Admission Application Form",
+    "description": "Fill out the form below to apply. Your application will be reviewed by our team.",
+    "have_account": "Already have an account?",
+    "login_link": "Login",
+    "name_label": "Full Name",
+    "name_placeholder": "John Doe",
+    "email_label": "Email",
+    "email_placeholder": "m@example.com",
+    "password_label": "Password",
+    "password_placeholder": "••••••••",
+    "father_name_label": "Father's Name",
+    "father_name_placeholder": "Father's full name",
+    "dob_label": "Date of Birth",
+    "phone_label": "Phone Number",
+    "phone_placeholder": "+91 12345 67890",
+    "address_label": "Full Address",
+    "address_placeholder": "Your complete address",
+    "qualification_label": "Last Qualification",
+    "qualification_placeholder": "e.g. 12th Pass, B.A.",
+    "course_label": "Select Course",
+    "course_placeholder": "Choose a course to apply for",
+    "success_title": "Application Submitted!",
+    "success_desc": "Thank you for your application. We will review it and contact you shortly."
+  },
+  "dashboard_page": {
+    "welcome": "Welcome, {name}!",
+    "subtitle": "Here's an overview of your profile and billing with JTI Godda.",
+    "profile_title": "My Profile",
+    "profile_desc": "Your personal and academic information.",
+    "card_title": "My Bills & Payments",
+    "card_desc": "Track your invoices and payment status.",
+    "table_header_date": "Date",
+    "table_header_bill_no": "Bill #",
+    "table_header_status": "Status",
+    "table_header_amount": "Amount",
+    "table_header_action": "Action",
+    "fee_status_paid": "Paid",
+    "fee_status_due": "Unpaid",
+    "no_bills": "You have no bills yet.",
+    "payment_toast_title": "Payment Gateway",
+    "payment_toast_desc": "You are being redirected to pay for bill {billNumber}. (This is a demo)",
+    "pay_online": "Pay Online"
+  },
+  "footer": {
+      "copyright": "© {year} JTI. All rights reserved."
+  },
+  "courses_data": {
+    "cca": { "title": "Certificate in Computer Application (CCA)", "description": "A 3-month intro to computer operations and essential office apps." },
+    "dca": { "title": "Diploma in Computer Application (DCA)", "description": "A 6-month course on computer fundamentals, MS Office, and internet skills." },
+    "adca": { "title": "Advanced Diploma in Computer Application (ADCA)", "description": "A 1-year program covering DCA, Tally, DTP, and an intro to C programming." },
+    "tally": { "title": "Tally Prime with GST", "description": "A 3-month specialized course in Tally Prime for accounting and GST." },
+    "dtp": { "title": "Desktop Publishing (DTP)", "description": "Learn professional layout design with Photoshop, CorelDRAW, and PageMaker." },
+    "typing_en": { "title": "English Typing Course", "description": "Develop fast and accurate English typing skills with structured lessons." },
+    "typing_hi": { "title": "Hindi Typing (Mangal/Krutidev)", "description": "Master Hindi typing on Mangal & Krutidev fonts for professional work." },
+    "web": { "title": "Web Development Basics", "description": "An intro to web development covering HTML, CSS, and JavaScript." },
+    "python": { "title": "Python Programming", "description": "Learn the versatile Python language, from basic syntax to advanced topics." },
+    "java": { "title": "Java Programming", "description": "A deep dive into Java for building robust, enterprise-level applications." },
+    "cpp": { "title": "C++ Programming", "description": "Master C++ for high-performance applications and systems programming." },
+    "cs11": { "title": "Computer Science (Class 11th)", "description": "CBSE/JAC curriculum-based coaching for Class 11th Computer Science." },
+    "cs12": { "title": "Computer Science (Class 12th)", "description": "Advanced coaching for Class 12th Computer Science board exams." },
+    "it": { "title": "Information Technology (IT)", "description": "A broad course covering IT fundamentals like hardware, software, and networking." },
+    "ites": { "title": "IT Enabled Services (ITES)", "description": "Learn about IT-enabled services like BPO, KPO, and other business processes." }
+  }
+}

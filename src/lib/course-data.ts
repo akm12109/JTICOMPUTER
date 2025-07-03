@@ -1,0 +1,36 @@
+
+export const courseKeys = [
+  'cca',
+  'dca',
+  'adca',
+  'tally',
+  'dtp',
+  'typing_en',
+  'typing_hi',
+  'web',
+  'python',
+  'java',
+  'cpp',
+  'cs11',
+  'cs12',
+  'it',
+  'ites',
+];
+
+export const courseImages: { [key: string]: { image: string; dataAiHint: string } } = {
+  cca: { image: 'https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/photos/OIP.jfif', dataAiHint: 'computer certificate' },
+  dca: { image: 'https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/photos/Diploma-in-Computer-Applications-DCA-Course%5B1%5D.jpg', dataAiHint: 'computer application diploma' },
+  adca: { image: 'https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/photos/adca.png', dataAiHint: 'advanced computing' },
+  tally: { image: 'https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/photos/OIP%20(1).jfif', dataAiHint: 'accounting software' },
+  dtp: { image: 'https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/photos/OIP%20(2).jfif', dataAiHint: 'graphic design' },
+  typing_en: { image: 'https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/photos/OIP%20(3).jfif', dataAiHint: 'english keyboard' },
+  typing_hi: { image: 'https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/photos/OIP%20(4).jfif', dataAiHint: 'hindi keyboard' },
+  web: { image: 'https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/photos/OIP%20(5).jfif', dataAiHint: 'web development' },
+  python: { image: 'https://tse4.mm.bing.net/th/id/OIP.QkSSprAmEIPRhirfLO8L3QHaEK?rs=1&pid=ImgDetMain&o=7&rm=3', dataAiHint: 'python code' },
+  java: { image: 'https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/photos/OIP%20(6).jfif', dataAiHint: 'java code' },
+  cpp: { image: 'https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/photos/OIP%20(7).jfif', dataAiHint: 'c++ code' },
+  cs11: { image: 'https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/photos/OIP%20(8).jfif', dataAiHint: 'highschool classroom' },
+  cs12: { image: 'https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/photos/OIP%20(9).jfif', dataAiHint: 'highschool students' },
+  it: { image: 'https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/photos/OIP%20(10).jfif', dataAiHint: 'information technology' },
+  ites: { image: 'https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/photos/OIP%20(11).jfif', dataAiHint: 'customer service' },
+};
