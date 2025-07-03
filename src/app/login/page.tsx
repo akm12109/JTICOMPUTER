@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import LoginForm from "@/components/login-form";
 import { useLanguage } from "@/hooks/use-language";
+import JtiLogo from "@/components/jti-logo";
 
 export default function LoginPage() {
   const { t } = useLanguage();
@@ -27,21 +28,15 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-primary/80" />
         <div className="relative z-20 flex items-center text-lg font-medium">
           <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/logo.png"
-              alt="JTI Godda Logo"
-              width={40}
-              height={40}
-              className="rounded-full"
-            />
+            <JtiLogo size="small" />
           </Link>
         </div>
         <div className="relative z-20 mt-auto">
           <blockquote className="space-y-2">
             <p className="text-lg">
-              &ldquo;{t('home_page.testimonial1_text')}&rdquo;
+              &ldquo;{t('home_page.testimonials.0.review')}&rdquo;
             </p>
-            <footer className="text-sm">{t('home_page.testimonial1_author')}</footer>
+            <footer className="text-sm">{t('home_page.testimonials.0.author')}</footer>
           </blockquote>
         </div>
       </div>

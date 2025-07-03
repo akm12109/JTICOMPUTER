@@ -16,6 +16,9 @@
   "nav": {
     "home": "Home",
     "courses": "Courses",
+    "gallery": "Gallery",
+    "image_gallery": "Image Gallery",
+    "video_gallery": "Video Gallery",
     "about": "Hamare Baare Mein",
     "contact": "Contact"
   },
@@ -45,10 +48,28 @@
     "featured_courses_title": "Featured Courses",
     "featured_courses_subtitle": "Hamare sabse popular courses ke saath shuruaat karein, jo sabhi skill levels ke liye design kiye gaye hain.",
     "testimonials_title": "Hamare Students Kya Kehte Hain",
-    "testimonial1_text": "\"JTI Godda ne mujhe IT mein apna career shuru karne ke liye skills aur confidence diya. Instructors bahut achhe hain aur hamesha madad ke liye taiyar rehte hain.\"",
-    "testimonial1_author": "- Priya S., ADCA Graduate",
-    "testimonial2_text": "\"Tally seekhne ka practical approach zabardast tha. Maine apna course poora karne ke turant baad ek accountant ki job le li.\"",
-    "testimonial2_author": "- Rohan K., Tally Graduate"
+    "testimonials": [
+      {
+        "review": "JTI ka Web Development course mere liye game-changer tha. Hands-on projects aur expert guidance ne mujhe apne passion ko follow karne aur ek professional web developer banne ka confidence diya.",
+        "author": "AKASH AKM (AkmXStar)",
+        "role": "Web Developer"
+      },
+      {
+        "review": "ADCA program bahut hi detail mein hai. Maine basic computing se lekar advanced applications tak sab kuch seekha. Faculty bahut supportive hai aur hamesha doubts clear karne ke liye taiyar rehti hai.",
+        "author": "Pradip Kumar",
+        "role": "ADCA Graduate"
+      },
+      {
+        "review": "JTI ke baare mein mujhe sabse achhi baat practical skills par focus lagi. ADCA course sirf theory nahi tha; isne mujhe IT industry ke real-world challenges ke liye taiyar kiya.",
+        "author": "Rohit Kumar",
+        "role": "ADCA Graduate"
+      },
+      {
+        "review": "JTI mein learning environment excellent hai. Teachers knowledgeable hain, aur job assistance program ne sach mein mujhe course ke turant baad ek behtareen position haasil karne mein madad ki.",
+        "author": "Jeewant Gupta",
+        "role": "ADCA Graduate"
+      }
+    ]
   },
   "courses_page": {
     "title": "Hamare Courses",
@@ -66,14 +87,14 @@
     "location_title": "Hamara Location",
     "basic_info": {
       "title": "Basic Jaankari",
-      "cin": "CIN",
+      "cin": "U72900JH2001PTC012042",
       "inc_date": "Incorporation Date",
       "inc_date_value": "January 12, 2001"
     },
     "capital_info": {
       "title": "Key Numbers",
-      "authorised_capital": "Authorised Share Capital",
-      "paidup_capital": "Paid-up Share Capital"
+      "authorised_capital": "₹ 100,000.00",
+      "paidup_capital": "₹ 100,000.00"
     },
     "directors_title": "Hamare Directors",
     "directors_subtitle": "JTI Godda ko behtareen banane wali leadership team se milein.",
@@ -91,8 +112,7 @@
     "email_title": "Hamein Email Karein",
     "email_value": "info@jtigodda.com",
     "call_title": "Hamein Call Karein",
-    "call_value": "+91 12345 67890",
-    "form_title": "Hamein ek Message Bhejein"
+    "call_value": "+91 82946 38712"
   },
   "contact_form": {
     "name_label": "Poora Naam",
@@ -118,6 +138,19 @@
     "forgot_password": "Password bhool gaye?",
     "success_title": "Login Successful",
     "success_desc": "Aapko aapke dashboard par redirect kiya ja raha hai..."
+  },
+  "forgot_password_page": {
+    "title": "Password Bhool Gaye",
+    "description": "Chinta na karein, hum aapko reset instructions bhej denge.",
+    "email_label": "Aapka Email Address",
+    "email_placeholder": "Apna registered email daalein",
+    "button_text": "Reset Link Bhejein",
+    "sending_text": "Bhej rahe hain...",
+    "remember_password": "Password yaad hai?",
+    "success_title": "Reset Link Bhej Diya!",
+    "success_desc": "Password reset karne ke liye please apna email check karein.",
+    "error_title": "Request Fail Ho Gayi",
+    "error_desc": "Reset link nahi bhej paaye. Please email check karke dubara try karein."
   },
   "admission_page": {
     "title": "Admission Application Form",
@@ -147,6 +180,7 @@
   "dashboard_page": {
     "welcome": "Welcome, {name}!",
     "subtitle": "Yahan JTI Godda ke saath aapki profile aur billing ka overview hai.",
+    "notice_board_title": "Notice Board",
     "profile_title": "Meri Profile",
     "profile_desc": "Aapki personal aur academic jaankari.",
     "card_title": "Mere Bills & Payments",
@@ -162,6 +196,14 @@
     "payment_toast_title": "Payment Gateway",
     "payment_toast_desc": "Aapko bill {billNumber} ke liye pay karne ke liye redirect kiya ja raha hai. (Yeh ek demo hai)",
     "pay_online": "Online Pay Karein"
+  },
+  "image_gallery_page": {
+    "title": "Image Gallery",
+    "subtitle": "JTI Godda ki life ki ek jhalak."
+  },
+  "video_gallery_page": {
+    "title": "Video Gallery",
+    "subtitle": "Hamare student testimonials, events, aur bhi bahut kuch dekhein."
   },
   "footer": {
       "copyright": "© {year} JTI. All rights reserved."
@@ -182,5 +224,22 @@
     "cs12": { "title": "Computer Science (Class 12th)", "description": "Class 12th Computer Science board exams ke liye advanced coaching." },
     "it": { "title": "Information Technology (IT)", "description": "Hardware, software, aur networking jaise IT fundamentals ko cover karne wala ek broad course." },
     "ites": { "title": "IT Enabled Services (ITES)", "description": "BPO, KPO, aur doosre business processes jaise IT-enabled services ke baare mein seekhein." }
+  },
+  "courses_details": {
+    "cca": { "long_description": "Beginners ke liye computer hardware, software, aur MS Office suite ki basics se parichit hone ke liye ek foundational course.", "duration": "3 Mahine", "fee": "₹3,500", "syllabus": "Computer Fundamentals|Operating System (Windows)|MS Paint & WordPad|MS Office (Word, Excel, PowerPoint)|Internet & Email" },
+    "dca": { "long_description": "Yeh diploma office mein use hone wale computer applications ki gehri samajh deta hai, jisme fundamentals se lekar advanced MS Office skills shamil hain.", "duration": "6 Mahine", "fee": "₹6,000", "syllabus": "Sabhi CCA topics|Advanced Excel & PowerPoint|MS Access ke saath Database concepts|Financial Accounting ka Parichay|Project Work" },
+    "adca": { "long_description": "Hamara flagship ek saal ka program jo computer applications, accounting software, design tools, aur programming basics ki gehri study offer karta hai.", "duration": "1 Saal", "fee": "₹12,000", "syllabus": "Sabhi DCA topics|GST ke saath Tally Prime|DTP (Photoshop, CorelDRAW)|C Programming ka Parichay|Personality Development|Final Project" },
+    "tally": { "long_description": "Tally Prime par hamare focused course ke saath ek certified accounting professional banein, jisme poora GST compliance shamil hai.", "duration": "3 Mahine", "fee": "₹4,000", "syllabus": "Accounting Basics|Company Creation & Configuration|Ledgers & Vouchers|Inventory Management|GST Setup & Returns|Payroll|Reporting & Analysis" },
+    "dtp": { "long_description": "Hamare Desktop Publishing course ke saath apni creativity ko nikharein. Professional graphics, brochures, aur layouts design karna seekhein.", "duration": "4 Mahine", "fee": "₹5,000", "syllabus": "Design Principles|Adobe Photoshop|CorelDRAW|Adobe PageMaker|Scanning & Printing Techniques|Project Work" },
+    "typing_en": { "long_description": "Systematic practice aur guided lessons ke zariye English typing mein apni speed aur accuracy badhayein.", "duration": "2 Mahine", "fee": "₹1,500", "syllabus": "Keyboard Layout|Touch Typing Technique|Word Drills & Sentence Practice|Paragraph Typing|Speed & Accuracy Tests" },
+    "typing_hi": { "long_description": "Mangal (Remington/Inscript) aur Krutidev dono fonts par Hindi typing mein maharat haasil karein, jo kai sarkari aur private jobs ke liye zaroori hai.", "duration": "3 Mahine", "fee": "₹2,000", "syllabus": "Keyboard par Devanagari Script|Krutidev Font Typing|Mangal Font (Remington & Inscript)|Speed Building Exercises|Complex Passages" },
+    "web": { "long_description": "Web development mein apna pehla kadam rakhein. Yeh course static websites banane ke liye zaroori frontend technologies ko cover karta hai.", "duration": "4 Mahine", "fee": "₹7,000", "syllabus": "Web ka Parichay|HTML5|CSS3 (Flexbox & Grid sahit)|JavaScript (ES6+)|DOM Manipulation|Final Project: Ek personal portfolio website" },
+    "python": { "long_description": "Python seekhein, duniya ki sabse popular programming languages mein se ek, bilkul shuru se. Beginners aur thode programming experience walon ke liye suitable.", "duration": "4 Mahine", "fee": "₹8,000", "syllabus": "Python Basics (Variables, Data Types)|Control Structures|Functions & Modules|Object-Oriented Programming (OOP)|File Handling|Libraries ka Parichay (NumPy, Pandas)" },
+    "java": { "long_description": "Java par ek comprehensive course, jo object-oriented principles aur platform-independent applications banane par focused hai.", "duration": "6 Mahine", "fee": "₹10,000", "syllabus": "Core Java Concepts|Java mein OOP (Inheritance, Polymorphism)|Exception Handling|Multithreading|UI ke liye Swing/AWT|Database Connectivity ke liye JDBC" },
+    "cpp": { "long_description": "Powerful C++ language mein maharat haasil karein, jiska istemal game development, high-performance computing, aur system software mein khoob hota hai.", "duration": "5 Mahine", "fee": "₹8,000", "syllabus": "C++ Fundamentals|Pointers & Memory Management|Object-Oriented Programming (OOP)|Standard Template Library (STL)|File I/O|Data Structures" },
+    "cs11": { "long_description": "Class 11th ke Computer Science students (CBSE/JAC board) ke liye specialized coaching, jisme practicals ke saath poora syllabus cover hota hai.", "duration": "Academic Year", "fee": "₹7,000", "syllabus": "Computer Systems & Organisation|Computational Thinking & Programming - 1 (Python)|Data Management - 1 (SQL)|Society, Law, and Ethics - 1" },
+    "cs12": { "long_description": "Apni Class 12th board exams ke liye hamari gehri Computer Science coaching (CBSE/JAC) ke saath taiyari karein, jo concepts aur problem-solving par focused hai.", "duration": "Academic Year", "fee": "₹8,000", "syllabus": "Computational Thinking & Programming - 2 (Advanced Python)|Computer Networks|Data Management - 2 (Advanced SQL)|SQL ke saath Python Interface" },
+    "it": { "long_description": "Information Technology field ka ek broad overview, un students ke liye ideal jo IT landscape ki general samajh chahte hain.", "duration": "3 Mahine", "fee": "₹4,500", "syllabus": "Computer Hardware & Peripherals|Software & Operating Systems|Computer Networks & Internet|Cyber Security Basics|IT mein Naye Trends" },
+    "ites": { "long_description": "Yeh course students ko tezi se badhte IT Enabled Services sector mein careers ke liye taiyar karta hai, jisme communication aur process knowledge par focus hai.", "duration": "3 Mahine", "fee": "₹5,000", "syllabus": "BPO/KPO ka Parichay|Customer Service Skills|Communication & Soft Skills|Data Entry & Processing|CRM software ka Parichay" }
   }
 }

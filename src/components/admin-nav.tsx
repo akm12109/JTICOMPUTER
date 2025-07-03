@@ -3,15 +3,16 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FileText, MessageSquare, Receipt, FileStack, BellRing } from 'lucide-react';
+import { FileText, MessageSquare, Receipt, FileStack, BellRing, Megaphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
+import JtiLogo from './jti-logo';
 
 const navItems = [
   { href: '/admin/applications', label: 'Applications', icon: BellRing },
   { href: '/admin/admissions', label: 'Admitted Students', icon: FileText },
   { href: '/admin/billing', label: 'Bill Generator', icon: Receipt },
   { href: '/admin/bills', label: 'All Bills', icon: FileStack },
+  { href: '/admin/notices', label: 'Notices', icon: Megaphone },
   { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
 ];
 
@@ -21,13 +22,7 @@ export default function AdminNav() {
   return (
     <aside className="w-64 bg-card border-r hidden md:block">
       <div className="p-4 border-b flex items-center gap-4">
-        <Image
-          src="https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/logo.png"
-          alt="JTI Godda Logo"
-          width={40}
-          height={40}
-          className="rounded-full"
-        />
+        <JtiLogo size="small" />
         <h2 className="text-xl font-bold font-headline">Admin Panel</h2>
       </div>
       <nav className="p-4">

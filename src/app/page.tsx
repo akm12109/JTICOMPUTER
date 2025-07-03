@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -10,6 +11,34 @@ import { useLanguage } from '@/hooks/use-language';
 import { courseImages } from '@/lib/course-data';
 
 const featuredCourseKeys = ['dca', 'adca', 'python'];
+
+const testimonialData = [
+  {
+    key: 0,
+    image: 'https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/photos/Testimonials/student%20(1).jpeg',
+    alt: 'Akash AKM',
+    dataAiHint: 'male student',
+  },
+  {
+    key: 1,
+    image: 'https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/photos/Testimonials/student%20(2).jpeg',
+    alt: 'Pradip Kumar',
+    dataAiHint: 'male student glasses',
+  },
+  {
+    key: 2,
+    image: 'https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/photos/Testimonials/student%20(3).jpeg',
+    alt: 'Rohit Kumar',
+    dataAiHint: 'male student smiling',
+  },
+  {
+    key: 3,
+    image: 'https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/photos/Testimonials/student%20(4).jpeg',
+    alt: 'Jeewant Gupta',
+    dataAiHint: 'male student formal',
+  },
+];
+
 
 export default function Home() {
   const { t } = useLanguage();
@@ -130,29 +159,28 @@ export default function Home() {
         <section className="w-full py-16 md:py-24 bg-background">
           <div className="container mx-auto px-4 md:px-6">
             <h2 className="text-3xl font-bold font-headline text-center">{t('home_page.testimonials_title')}</h2>
-            <div className="mt-12 grid gap-8 md:grid-cols-1 lg:grid-cols-2 max-w-4xl mx-auto">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-4">
-                    <Image src="https://placehold.co/100x100.png" data-ai-hint="student profile" alt="Student 1" width={60} height={60} className="rounded-full" />
+            <div className="mt-12 grid gap-8 md:grid-cols-1 lg:grid-cols-2 max-w-5xl mx-auto">
+               {testimonialData.map((testimonial) => (
+                <Card key={testimonial.key}>
+                  <CardContent className="pt-6 flex items-start gap-4">
+                    <Image 
+                      src={testimonial.image} 
+                      alt={testimonial.alt} 
+                      width={64} 
+                      height={64} 
+                      className="w-16 h-16 rounded-full object-cover border-2 border-primary/20 flex-shrink-0"
+                      data-ai-hint={testimonial.dataAiHint}
+                    />
                     <div>
-                      <p className="text-muted-foreground italic">{t('home_page.testimonial1_text')}</p>
-                      <p className="font-bold mt-4">{t('home_page.testimonial1_author')}</p>
+                      <p className="text-muted-foreground italic">"{t(`home_page.testimonials.${testimonial.key}.review`)}"</p>
+                      <footer className="mt-4">
+                        <p className="font-bold">{t(`home_page.testimonials.${testimonial.key}.author`)}</p>
+                        <p className="text-sm text-primary font-medium">{t(`home_page.testimonials.${testimonial.key}.role`)}</p>
+                      </footer>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                   <div className="flex items-start gap-4">
-                    <Image src="https://placehold.co/100x100.png" data-ai-hint="student profile" alt="Student 2" width={60} height={60} className="rounded-full" />
-                    <div>
-                      <p className="text-muted-foreground italic">{t('home_page.testimonial2_text')}</p>
-                      <p className="font-bold mt-4">{t('home_page.testimonial2_author')}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         </section>

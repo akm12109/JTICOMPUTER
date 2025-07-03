@@ -16,6 +16,9 @@
   "nav": {
     "home": "Home",
     "courses": "Courses",
+    "gallery": "Gallery",
+    "image_gallery": "Image Gallery",
+    "video_gallery": "Video Gallery",
     "about": "About Us",
     "contact": "Contact"
   },
@@ -45,10 +48,28 @@
     "featured_courses_title": "Featured Courses",
     "featured_courses_subtitle": "Get started with our most popular courses, designed for all skill levels.",
     "testimonials_title": "What Our Students Say",
-    "testimonial1_text": "\"JTI Godda provided me with the skills and confidence to start my career in IT. The instructors are amazing and always ready to help.\"",
-    "testimonial1_author": "- Priya S., ADCA Graduate",
-    "testimonial2_text": "\"The practical approach to learning Tally was fantastic. I landed a job as an accountant immediately after completing my course.\"",
-    "testimonial2_author": "- Rohan K., Tally Graduate"
+    "testimonials": [
+      {
+        "review": "JTI's Web Development course was a game-changer. The hands-on projects and expert guidance gave me the confidence to pursue my passion and become a professional web developer.",
+        "author": "AKASH AKM (AkmXStar)",
+        "role": "Web Developer"
+      },
+      {
+        "review": "The ADCA program is incredibly thorough. I learned everything from basic computing to advanced applications. The faculty is supportive and always willing to clear doubts.",
+        "author": "Pradip Kumar",
+        "role": "ADCA Graduate"
+      },
+      {
+        "review": "What I loved most about JTI was the focus on practical skills. The ADCA course wasn't just theory; it prepared me for the real-world challenges of the IT industry.",
+        "author": "Rohit Kumar",
+        "role": "ADCA Graduate"
+      },
+      {
+        "review": "The learning environment at JTI is excellent. The teachers are knowledgeable, and the job assistance program really helped me secure a great position right after my course.",
+        "author": "Jeewant Gupta",
+        "role": "ADCA Graduate"
+      }
+    ]
   },
   "courses_page": {
     "title": "Our Courses",
@@ -66,14 +87,14 @@
     "location_title": "Our Location",
     "basic_info": {
       "title": "Basic Information",
-      "cin": "CIN",
+      "cin": "U72900JH2001PTC012042",
       "inc_date": "Incorporation Date",
       "inc_date_value": "January 12, 2001"
     },
     "capital_info": {
       "title": "Key Numbers",
-      "authorised_capital": "Authorised Share Capital",
-      "paidup_capital": "Paid-up Share Capital"
+      "authorised_capital": "₹ 100,000.00",
+      "paidup_capital": "₹ 100,000.00"
     },
     "directors_title": "Our Directors",
     "directors_subtitle": "Meet the leadership team steering JTI Godda towards excellence.",
@@ -91,8 +112,7 @@
     "email_title": "Email Us",
     "email_value": "info@jtigodda.com",
     "call_title": "Call Us",
-    "call_value": "+91 12345 67890",
-    "form_title": "Send us a Message"
+    "call_value": "+91 82946 38712"
   },
   "contact_form": {
     "name_label": "Full Name",
@@ -118,6 +138,19 @@
     "forgot_password": "Forgot your password?",
     "success_title": "Login Successful",
     "success_desc": "Redirecting to your dashboard..."
+  },
+  "forgot_password_page": {
+    "title": "Forgot Password",
+    "description": "No worries, we'll send you reset instructions.",
+    "email_label": "Your Email Address",
+    "email_placeholder": "Enter your registered email",
+    "button_text": "Send Reset Link",
+    "sending_text": "Sending...",
+    "remember_password": "Remember your password?",
+    "success_title": "Reset Link Sent!",
+    "success_desc": "Please check your email for password reset instructions.",
+    "error_title": "Request Failed",
+    "error_desc": "Could not send reset link. Please check the email and try again."
   },
   "admission_page": {
     "title": "Admission Application Form",
@@ -147,6 +180,7 @@
   "dashboard_page": {
     "welcome": "Welcome, {name}!",
     "subtitle": "Here's an overview of your profile and billing with JTI Godda.",
+    "notice_board_title": "Notice Board",
     "profile_title": "My Profile",
     "profile_desc": "Your personal and academic information.",
     "card_title": "My Bills & Payments",
@@ -162,6 +196,14 @@
     "payment_toast_title": "Payment Gateway",
     "payment_toast_desc": "You are being redirected to pay for bill {billNumber}. (This is a demo)",
     "pay_online": "Pay Online"
+  },
+  "image_gallery_page": {
+    "title": "Image Gallery",
+    "subtitle": "A glimpse into life at JTI Godda."
+  },
+  "video_gallery_page": {
+    "title": "Video Gallery",
+    "subtitle": "Watch our student testimonials, events, and more."
   },
   "footer": {
       "copyright": "© {year} JTI. All rights reserved."
@@ -182,5 +224,22 @@
     "cs12": { "title": "Computer Science (Class 12th)", "description": "Advanced coaching for Class 12th Computer Science board exams." },
     "it": { "title": "Information Technology (IT)", "description": "A broad course covering IT fundamentals like hardware, software, and networking." },
     "ites": { "title": "IT Enabled Services (ITES)", "description": "Learn about IT-enabled services like BPO, KPO, and other business processes." }
+  },
+  "courses_details": {
+    "cca": { "long_description": "A foundational course for beginners to get acquainted with the basics of computer hardware, software, and the MS Office suite.", "duration": "3 Months", "fee": "₹3,500", "syllabus": "Computer Fundamentals|Operating System (Windows)|MS Paint & WordPad|MS Office (Word, Excel, PowerPoint)|Internet & Email" },
+    "dca": { "long_description": "This diploma provides a comprehensive understanding of computer applications used in offices, covering fundamentals to advanced MS Office skills.", "duration": "6 Months", "fee": "₹6,000", "syllabus": "All CCA topics|Advanced Excel & PowerPoint|Database concepts with MS Access|Introduction to Financial Accounting|Project Work" },
+    "adca": { "long_description": "Our flagship one-year program that offers an in-depth study of computer applications, accounting software, design tools, and programming basics.", "duration": "1 Year", "fee": "₹12,000", "syllabus": "All DCA topics|Tally Prime with GST|DTP (Photoshop, CorelDRAW)|Introduction to C Programming|Personality Development|Final Project" },
+    "tally": { "long_description": "Become a certified accounting professional with our focused course on Tally Prime, including complete GST compliance.", "duration": "3 Months", "fee": "₹4,000", "syllabus": "Accounting Basics|Company Creation & Configuration|Ledgers & Vouchers|Inventory Management|GST Setup & Returns|Payroll|Reporting & Analysis" },
+    "dtp": { "long_description": "Unleash your creativity with our Desktop Publishing course. Learn to design professional graphics, brochures, and layouts.", "duration": "4 Months", "fee": "₹5,000", "syllabus": "Design Principles|Adobe Photoshop|CorelDRAW|Adobe PageMaker|Scanning & Printing Techniques|Project Work" },
+    "typing_en": { "long_description": "Increase your speed and accuracy in English typing through systematic practice and guided lessons.", "duration": "2 Months", "fee": "₹1,500", "syllabus": "Keyboard Layout|Touch Typing Technique|Word Drills & Sentence Practice|Paragraph Typing|Speed & Accuracy Tests" },
+    "typing_hi": { "long_description": "Master Hindi typing on both Mangal (Remington/Inscript) and Krutidev fonts, essential for many government and private sector jobs.", "duration": "3 Months", "fee": "₹2,000", "syllabus": "Devanagari Script on Keyboard|Krutidev Font Typing|Mangal Font (Remington & Inscript)|Speed Building Exercises|Complex Passages" },
+    "web": { "long_description": "Take your first step into web development. This course covers the essential frontend technologies to build static websites.", "duration": "4 Months", "fee": "₹7,000", "syllabus": "Introduction to Web|HTML5|CSS3 (including Flexbox & Grid)|JavaScript (ES6+)|DOM Manipulation|Final Project: A personal portfolio website" },
+    "python": { "long_description": "Learn Python, one of the world's most popular programming languages, from scratch. Suitable for beginners and those with some programming experience.", "duration": "4 Months", "fee": "₹8,000", "syllabus": "Python Basics (Variables, Data Types)|Control Structures|Functions & Modules|Object-Oriented Programming (OOP)|File Handling|Introduction to Libraries (NumPy, Pandas)" },
+    "java": { "long_description": "A comprehensive course on Java, focusing on object-oriented principles and building platform-independent applications.", "duration": "6 Months", "fee": "₹10,000", "syllabus": "Core Java Concepts|OOP in Java (Inheritance, Polymorphism)|Exception Handling|Multithreading|Swing/AWT for UI|JDBC for Database Connectivity" },
+    "cpp": { "long_description": "Master the powerful C++ language, widely used in game development, high-performance computing, and system software.", "duration": "5 Months", "fee": "₹8,000", "syllabus": "C++ Fundamentals|Pointers & Memory Management|Object-Oriented Programming (OOP)|Standard Template Library (STL)|File I/O|Data Structures" },
+    "cs11": { "long_description": "Specialized coaching for Class 11th Computer Science students (CBSE/JAC board), covering the complete syllabus with practicals.", "duration": "Academic Year", "fee": "₹7,000", "syllabus": "Computer Systems & Organisation|Computational Thinking & Programming - 1 (Python)|Data Management - 1 (SQL)|Society, Law, and Ethics - 1" },
+    "cs12": { "long_description": "Prepare for your Class 12th board exams with our in-depth Computer Science coaching (CBSE/JAC), focusing on concepts and problem-solving.", "duration": "Academic Year", "fee": "₹8,000", "syllabus": "Computational Thinking & Programming - 2 (Advanced Python)|Computer Networks|Data Management - 2 (Advanced SQL)|Interface Python with SQL" },
+    "it": { "long_description": "A broad overview of the Information Technology field, ideal for students who want a general understanding of the IT landscape.", "duration": "3 Months", "fee": "₹4,500", "syllabus": "Computer Hardware & Peripherals|Software & Operating Systems|Computer Networks & Internet|Cyber Security Basics|Emerging Trends in IT" },
+    "ites": { "long_description": "This course prepares students for careers in the booming IT Enabled Services sector, focusing on communication and process knowledge.", "duration": "3 Months", "fee": "₹5,000", "syllabus": "Introduction to BPO/KPO|Customer Service Skills|Communication & Soft Skills|Data Entry & Processing|Introduction to CRM software" }
   }
 }

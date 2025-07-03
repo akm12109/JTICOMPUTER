@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, ArrowLeft, Mail, User, Calendar, Receipt, Phone, Home, BookOpen, GraduationCap, Edit, Trash2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -100,27 +100,42 @@ export default function StudentDetailPage() {
     if (!studentId || !db) return;
     setIsUpdating(true);
     try {
-      const studentRef = doc(db, 'admissions', studentId);
-      
-      const dobValue = editableStudent.dob;
-      const dobForUpdate = dobValue
-        ? ((dobValue as any).toDate?.() ?? new Date(dobValue as any))
-        : null;
+        const studentRef = doc(db, 'admissions', studentId);
 
-      const dataToUpdate = { ...editableStudent, dob: dobForUpdate };
-      
-      await updateDoc(studentRef, dataToUpdate);
+        const dobValue = editableStudent.dob;
 
-      setStudent(prev => {
-        if (!prev) return null;
-        return {
-            ...prev,
-            ...editableStudent,
-            dob: dobForUpdate ? { toDate: () => dobForUpdate } : prev.dob
-        } as Student;
-      });
+        if (!dobValue) {
+            toast({ variant: 'destructive', title: "Validation Error", description: "Date of Birth cannot be empty." });
+            setIsUpdating(false);
+            return;
+        }
 
-      toast({ title: "Success", description: "Student details updated." });
+        const potentialDate = (dobValue as any).toDate?.() ?? new Date(dobValue as any);
+
+        if (!isValid(potentialDate)) {
+            toast({
+                variant: 'destructive',
+                title: 'Invalid Date',
+                description: 'Please enter a valid date of birth in YYYY-MM-DD format.'
+            });
+            setIsUpdating(false);
+            return;
+        }
+
+        const dataToUpdate = { ...editableStudent, dob: potentialDate };
+
+        await updateDoc(studentRef, dataToUpdate);
+
+        setStudent(prev => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                ...editableStudent,
+                dob: { toDate: () => potentialDate }
+            } as Student;
+        });
+
+        toast({ title: "Success", description: "Student details updated." });
     } catch (error) {
         console.error("Update error: ", error);
         toast({ variant: 'destructive', title: "Error", description: "Failed to update student." });
@@ -129,6 +144,7 @@ export default function StudentDetailPage() {
         setEditDialogOpen(false);
     }
   }
+
 
   const handleDeleteStudent = async () => {
       if (!studentId || !db) return;
@@ -181,10 +197,10 @@ export default function StudentDetailPage() {
   const totalPaid = bills.filter(b => b.status === 'paid').reduce((sum, bill) => sum + bill.total, 0);
   const amountDue = totalBilled - totalPaid;
 
-  const DetailRow = ({ icon, label, value }: { icon: React.ElementType, label: string, value: string | undefined }) => (
+  const DetailRow = ({ icon: Icon, label, value }: { icon: React.ElementType, label: string, value: string | undefined }) => (
     <div className="flex items-start gap-3">
         <div className="bg-muted rounded-full p-2">
-            <icon className="h-4 w-4 text-muted-foreground" />
+            <Icon className="h-4 w-4 text-muted-foreground" />
         </div>
         <div>
             <p className="text-xs font-medium text-muted-foreground">{label}</p>
@@ -371,5 +387,3 @@ export default function StudentDetailPage() {
     </div>
   );
 }
-
-    

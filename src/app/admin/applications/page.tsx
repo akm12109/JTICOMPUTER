@@ -1,7 +1,7 @@
 
 'use client';
 import { useEffect, useState } from 'react';
-import { collection, getDocs, orderBy, query, where, deleteDoc, doc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query, where, deleteDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db, firebaseConfig } from '@/lib/firebase';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
@@ -18,7 +18,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -52,18 +51,29 @@ export default function ApplicationsPage() {
         return;
       }
       try {
-        const q = query(collection(db, 'applications'), where('status', '==', 'pending'), orderBy('createdAt', 'desc'));
+        // The original query with orderBy required a composite index in Firestore.
+        // By removing orderBy and sorting on the client, we avoid this requirement.
+        const q = query(collection(db, 'applications'), where('status', '==', 'pending'));
         const querySnapshot = await getDocs(q);
         const appsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Application[];
+        
+        // Sort applications by date on the client side
+        appsData.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+        
         setApplications(appsData);
       } catch (error) {
         console.error("Error fetching applications: ", error);
+        toast({
+          variant: "destructive",
+          title: "Could not fetch applications",
+          description: "There was an error fetching data. Please check the browser console for more details."
+        });
       } finally {
         setLoading(false);
       }
     };
     fetchApplications();
-  }, []);
+  }, [toast]);
 
   const handleAdmitStudent = async () => {
     if (!selectedApp || !tempPassword || !db) return;
@@ -82,8 +92,10 @@ export default function ApplicationsPage() {
         const userCredential = await createUserWithEmailAndPassword(tempAuth, selectedApp.email, tempPassword);
         const user = userCredential.user;
 
+        const { id, ...appData } = selectedApp;
+
         await setDoc(doc(db, "admissions", user.uid), {
-            ...selectedApp,
+            ...appData,
             uid: user.uid,
             status: 'admitted',
             admissionDate: serverTimestamp()
@@ -168,11 +180,9 @@ JTI Godda Admission Team
                     <TableCell>{app.email}</TableCell>
                     <TableCell>{app.courseAppliedFor}</TableCell>
                     <TableCell className="text-right">
-                       <DialogTrigger asChild>
-                          <Button size="sm" onClick={() => { setSelectedApp(app); setModalOpen(true); }}>
-                             <UserCheck className="mr-2 h-4 w-4" /> Admit
-                          </Button>
-                       </DialogTrigger>
+                       <Button size="sm" onClick={() => { setSelectedApp(app); setModalOpen(true); }}>
+                          <UserCheck className="mr-2 h-4 w-4" /> Admit
+                       </Button>
                     </TableCell>
                   </TableRow>
                 ))

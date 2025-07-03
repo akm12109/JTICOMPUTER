@@ -31,12 +31,20 @@ type Bill = {
   createdAt: { toDate: () => Date };
 };
 
+type Notice = {
+  id: string;
+  title: string;
+  message: string;
+  createdAt: { toDate: () => Date };
+}
+
 
 export default function DashboardPage() {
   const { t } = useLanguage();
   const { user } = useAuth();
   const [student, setStudent] = useState<Student | null>(null);
   const [bills, setBills] = useState<Bill[]>([]);
+  const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
   const [firebaseConfigured, setFirebaseConfigured] = useState(true);
 
@@ -63,6 +71,11 @@ export default function DashboardPage() {
             const billsSnapshot = await getDocs(billsQuery);
             const billsData = billsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Bill[];
             setBills(billsData);
+
+            const noticesQuery = query(collection(db, 'notices'), orderBy('createdAt', 'desc'));
+            const noticesSnapshot = await getDocs(noticesQuery);
+            const noticesData = noticesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Notice[];
+            setNotices(noticesData);
 
         } catch (error) {
             console.error("Error fetching dashboard data:", error);
@@ -120,7 +133,7 @@ export default function DashboardPage() {
             <h1 className="text-3xl md:text-4xl font-bold font-headline">{t('dashboard_page.welcome').replace('{name}', student.name)}</h1>
             <p className="text-muted-foreground mt-2">{t('dashboard_page.subtitle')}</p>
         </div>
-        <DashboardClient student={student} bills={bills} />
+        <DashboardClient student={student} bills={bills} notices={notices} />
     </div>
   );
 }

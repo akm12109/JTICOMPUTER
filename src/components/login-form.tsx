@@ -108,7 +108,7 @@ export default function LoginForm() {
                             <div className="flex items-center">
                                 <FormLabel>{t('login_page.password_label')}</FormLabel>
                                 <Link
-                                    href="#"
+                                    href="/forgot-password"
                                     className="ml-auto inline-block text-sm underline text-primary"
                                 >
                                     {t('login_page.forgot_password')}

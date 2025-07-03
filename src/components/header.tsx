@@ -3,22 +3,37 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, LogOut, LayoutDashboard } from 'lucide-react';
+import { Menu, LogOut, LayoutDashboard, ChevronDown } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
 import LanguageSwitcher from './language-switcher';
-import Image from 'next/image';
+import JtiLogo from './jti-logo';
 import { useAuth } from '@/hooks/use-auth';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
-const routes = [
+const navItems = [
   { href: '/', labelKey: 'nav.home' },
   { href: '/courses', labelKey: 'nav.courses' },
+  {
+    labelKey: 'nav.gallery',
+    isDropdown: true,
+    items: [
+      { href: '/gallery/images', labelKey: 'nav.image_gallery' },
+      { href: '/gallery/videos', labelKey: 'nav.video_gallery' },
+    ],
+  },
   { href: '/about', labelKey: 'nav.about' },
   { href: '/contact', labelKey: 'nav.contact' },
 ];
+
 
 export default function Header() {
   const { t } = useLanguage();
@@ -48,26 +63,36 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
       <div className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <Image
-            src="https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/logo.png"
-            alt="JTI Godda Logo"
-            width={56}
-            height={56}
-            className="rounded-full"
-          />
+          <JtiLogo size="large" />
         </Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
-          {routes.map((route) => (
-            <Link
-              key={route.href}
-              href={route.href}
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
-              {t(route.labelKey)}
-            </Link>
-          ))}
+          {navItems.map((item) =>
+            item.isDropdown ? (
+              <DropdownMenu key={item.labelKey}>
+                <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-primary focus:outline-none">
+                  {t(item.labelKey)}
+                  <ChevronDown className="h-4 w-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {item.items?.map((subItem) => (
+                    <DropdownMenuItem key={subItem.href} asChild>
+                      <Link href={subItem.href}>{t(subItem.labelKey)}</Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link
+                key={item.href}
+                href={item.href!}
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+              >
+                {t(item.labelKey)}
+              </Link>
+            )
+          )}
           {user && user.email === 'admin@jtigodda.in' && (
              <Link
               href="/admin/admissions"
@@ -113,19 +138,15 @@ export default function Header() {
             <SheetContent side="right">
               <div className="flex flex-col gap-6 p-6">
                 <Link href="/" className="flex items-center gap-2">
-                  <Image
-                    src="https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/logo.png"
-                    alt="JTI Godda Logo"
-                    width={48}
-                    height={48}
-                    className="rounded-full"
-                  />
+                  <JtiLogo size="medium" />
                 </Link>
                 <nav className="flex flex-col gap-4">
-                  {routes.map((route) => (
+                  {navItems.flatMap((item) => 
+                    item.isDropdown ? item.items! : [item]
+                  ).map((route) => (
                     <Link
                       key={route.href}
-                      href={route.href}
+                      href={route.href!}
                       className="text-lg font-medium text-foreground hover:text-primary"
                     >
                       {t(route.labelKey)}

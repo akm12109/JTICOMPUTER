@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useState, useRef, forwardRef } from 'react';
-import { useReactToPrint } from 'react-to-print';
+import React, { useEffect, useState, useRef } from 'react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { collection, getDocs, query, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useSearchParams } from 'next/navigation';
+import QRCode from 'qrcode';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
+import JtiLogo from '@/components/jti-logo';
 
 type Admission = {
   uid: string;
@@ -61,86 +64,110 @@ interface BillDetails extends BillFormValues {
   total: number;
 }
 
-const BillPreview = forwardRef<HTMLDivElement, { bill: BillDetails }>(({ bill }, ref) => (
-  <div ref={ref} className="p-8 border rounded-lg bg-white text-black">
-    {/* Header */}
-    <div className="flex justify-between items-start pb-4 mb-6 border-b">
-      <div className="flex items-center gap-4">
-        <img
-          src="https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/logo.png"
-          alt="JTI Godda Logo"
-          width={60}
-          height={60}
-          className="rounded-full"
-        />
-        <div>
-          <h2 className="text-2xl font-bold">Jharkhand Technical Institute</h2>
-          <p className="text-sm text-gray-600">H/O- Mritunjay Prasad, Pathra Road, Sarkanda</p>
-          <p className="text-sm text-gray-600">Godda, Jharkhand 814133</p>
-        </div>
-      </div>
-      <h1 className="text-4xl font-bold text-gray-500 uppercase">Invoice</h1>
-    </div>
+const BillPreview = ({ bill }: { bill: BillDetails }) => {
+    const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
 
-    {/* Bill Details */}
-    <div className="grid grid-cols-2 gap-4 mb-8">
-      <div>
-        <h3 className="font-semibold mb-2 text-gray-700">BILL TO</h3>
-        <p className="font-bold">{bill.studentName}</p>
-        {bill.studentEmail && <p>{bill.studentEmail}</p>}
-      </div>
-      <div className="text-right">
-        <p><span className="font-semibold text-gray-700">Invoice #:</span> {bill.billNumber}</p>
-        <p><span className="font-semibold text-gray-700">Date:</span> {bill.date}</p>
-         {bill.isPaid && bill.paymentMethod && (
-            <p><span className="font-semibold text-gray-700">Status: </span> <span className="font-bold text-green-600">PAID</span> via {bill.paymentMethod.toUpperCase()}</p>
-         )}
-         {!bill.isPaid && (
-            <p><span className="font-semibold text-gray-700">Status: </span> <span className="font-bold text-red-600">UNPAID</span></p>
-         )}
-      </div>
-    </div>
+    useEffect(() => {
+        if (bill) {
+            const billInfo = `Student: ${bill.studentName}\nEmail: ${bill.studentEmail || 'N/A'}\nBill #: ${bill.billNumber}\nTotal: ₹${bill.total.toFixed(2)}`;
+            QRCode.toDataURL(billInfo, {
+                errorCorrectionLevel: 'H',
+                margin: 2,
+                color: {
+                    dark: '#0077CC', // JTI Primary Blue
+                    light: '#FFFFFF'
+                }
+            })
+            .then(url => {
+                setQrCodeDataUrl(url);
+            })
+            .catch(err => {
+                console.error("QR Code generation failed:", err);
+            });
+        }
+    }, [bill]);
 
-    {/* Items Table */}
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-[70%]">Description</TableHead>
-          <TableHead className="text-right">Amount</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {bill.items.map((item, index) => (
-            <TableRow key={index}>
-                <TableCell className="font-medium">{item.description}</TableCell>
-                <TableCell className="text-right font-medium">₹{item.amount.toFixed(2)}</TableCell>
-            </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-    <Separator className="my-4 bg-gray-300" />
-    <div className="flex justify-end">
-      <div className="w-1/2">
-          <div className="flex justify-between font-semibold text-gray-700">
-            <span>Total</span>
-            <span className="font-bold text-lg text-black">₹{bill.total.toFixed(2)}</span>
-          </div>
-      </div>
-    </div>
+    return (
+        <div className="p-8 border rounded-lg bg-white text-black font-sans">
+            <div className="flex justify-between items-center pb-4 mb-4 border-b-2 border-primary">
+                <div className="flex items-center gap-4">
+                    <JtiLogo size="medium" textColor="text-black" />
+                    <div>
+                        <h2 className="text-2xl font-bold text-primary font-headline">Jharkhand Technical Institute</h2>
+                        <p className="text-xs text-gray-600">H/O- Mritunjay Prasad, Pathra Road, Sarkanda</p>
+                        <p className="text-xs text-gray-600">Godda, Jharkhand 814133</p>
+                        <p className="text-xs text-gray-600">Email: info@jtigodda.com | Phone: +91 82946 38712</p>
+                    </div>
+                </div>
+                <h1 className="text-4xl font-extrabold text-gray-300 uppercase tracking-widest">Invoice</h1>
+            </div>
     
-    <div className="mt-12 text-center text-xs text-gray-500">
-      <p>Thank you for your business!</p>
-      <p>This is a computer-generated invoice and does not require a signature.</p>
-    </div>
-  </div>
-));
-BillPreview.displayName = 'BillPreview';
+            <div className="grid grid-cols-2 gap-4 mb-8">
+                <div>
+                    <h3 className="font-semibold mb-2 text-gray-500 text-sm uppercase">Bill To</h3>
+                    <p className="font-bold text-lg">{bill.studentName}</p>
+                    {bill.studentEmail && <p className="text-gray-700">{bill.studentEmail}</p>}
+                </div>
+                <div className="text-right">
+                    <p><span className="font-semibold text-gray-500">Invoice #: </span> {bill.billNumber}</p>
+                    <p><span className="font-semibold text-gray-500">Date: </span> {bill.date}</p>
+                    {bill.isPaid && bill.paymentMethod ? (
+                        <p><span className="font-semibold text-gray-500">Status: </span> <span className="font-bold text-green-600">PAID</span> via {bill.paymentMethod.toUpperCase()}</p>
+                    ) : (
+                        <p><span className="font-semibold text-gray-500">Status: </span> <span className="font-bold text-red-600">UNPAID</span></p>
+                    )}
+                </div>
+            </div>
+    
+            <Table>
+                <TableHeader className="bg-primary/10">
+                    <TableRow>
+                        <TableHead className="w-[70%] text-primary font-bold">Description</TableHead>
+                        <TableHead className="text-right text-primary font-bold">Amount</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {bill.items.map((item, index) => (
+                        <TableRow key={index} className="border-b-gray-100">
+                            <TableCell className="font-medium py-3">{item.description}</TableCell>
+                            <TableCell className="text-right font-medium">₹{item.amount.toFixed(2)}</TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+            <Separator className="my-1 bg-gray-200" />
+            
+            <div className="mt-8 flex justify-between items-end">
+                <div>
+                    {qrCodeDataUrl ? (
+                        <>
+                            <img src={qrCodeDataUrl} alt="Bill QR Code" className="w-28 h-28 border p-1" />
+                            <p className="text-xs text-gray-500 mt-1 text-center">Scan for details</p>
+                        </>
+                    ) : <div className="w-28 h-28 bg-gray-100 animate-pulse"></div>}
+                </div>
+                <div className="w-1/2">
+                    <div className="flex justify-between items-center bg-gray-100 p-4 rounded-lg">
+                        <span className="font-bold text-lg text-gray-700">Total</span>
+                        <span className="font-bold text-2xl text-primary">₹{bill.total.toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="mt-10 pt-4 border-t text-center text-xs text-gray-500">
+                <p>Thank you for choosing Jharkhand Technical Institute!</p>
+                <p>This is a computer-generated invoice and does not require a signature.</p>
+            </div>
+        </div>
+    );
+};
 
 
 export default function BillingPage() {
   const [admissions, setAdmissions] = useState<Admission[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
   const [firebaseConfigured, setFirebaseConfigured] = useState(true);
   const [billData, setBillData] = useState<BillDetails | null>(null);
   const [billToSave, setBillToSave] = useState<any | null>(null);
@@ -150,10 +177,52 @@ export default function BillingPage() {
 
   const componentToPrintRef = useRef<HTMLDivElement>(null);
 
-  const handlePrint = useReactToPrint({
-    content: () => componentToPrintRef.current,
-    documentTitle: billData ? `Invoice-${billData.billNumber}` : 'Invoice',
-  });
+  const handlePrint = async () => {
+    const element = componentToPrintRef.current;
+    if (!element) {
+        toast({ variant: 'destructive', title: 'Could not find bill to print.' });
+        return;
+    }
+    setIsPrinting(true);
+    try {
+        const canvas = await html2canvas(element, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff'
+        });
+        const imgData = canvas.toDataURL('image/png');
+        
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const ratio = canvasWidth / canvasHeight;
+
+        let finalWidth = pdfWidth - 20;
+        let finalHeight = finalWidth / ratio;
+
+        if (finalHeight > pdfHeight - 20) {
+            finalHeight = pdfHeight - 20;
+            finalWidth = finalHeight * ratio;
+        }
+
+        const xOffset = (pdfWidth - finalWidth) / 2;
+        const yOffset = 10;
+
+        pdf.addImage(imgData, 'PNG', xOffset, yOffset, finalWidth, finalHeight);
+        
+        const pdfBlob = pdf.output('blob');
+        const url = URL.createObjectURL(pdfBlob);
+        window.open(url, '_blank');
+
+    } catch (error) {
+        console.error("Error generating PDF: ", error);
+        toast({ variant: 'destructive', title: 'Failed to generate PDF.' });
+    } finally {
+        setIsPrinting(false);
+    }
+  };
 
   const form = useForm<BillFormValues>({
     resolver: zodResolver(billSchema),
@@ -495,9 +564,9 @@ export default function BillingPage() {
               <CardDescription>Review the bill before saving or printing.</CardDescription>
             </div>
             {billData && (
-              <Button onClick={handlePrint} variant="secondary">
-                <Printer className="mr-2 h-4 w-4" />
-                Print / Download
+              <Button onClick={handlePrint} variant="secondary" disabled={isPrinting}>
+                {isPrinting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
+                {isPrinting ? 'Generating PDF...' : 'Print / Download'}
               </Button>
             )}
           </div>
@@ -505,8 +574,10 @@ export default function BillingPage() {
         <CardContent>
           {billData ? (
             <>
-              <BillPreview bill={billData} ref={componentToPrintRef} />
-              <Button onClick={handleSaveBill} disabled={isSubmitting} className="w-full mt-4">
+              <div ref={componentToPrintRef}>
+                <BillPreview bill={billData} />
+              </div>
+              <Button onClick={handleSaveBill} disabled={isSubmitting || isPrinting} className="w-full mt-4">
                   {isSubmitting ? <Loader2 className="animate-spin" /> : <><Save className="mr-2 h-4 w-4"/> Save Bill</>}
               </Button>
             </>

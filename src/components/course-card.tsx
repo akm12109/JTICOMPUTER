@@ -33,7 +33,7 @@ export default function CourseCard({ courseKey, image, dataAiHint }: CourseCardP
             <CardTitle className="font-headline text-2xl drop-shadow-md z-10">{title}</CardTitle>
             <p className="mt-2 text-sm text-neutral-200 line-clamp-3 drop-shadow-sm z-10">{description}</p>
             <Button asChild variant="link" className="text-white p-0 h-auto justify-start mt-4 z-10 w-fit hover:no-underline hover:text-neutral-200">
-              <Link href="#">
+              <Link href={`/courses/${courseKey}`}>
                 {t('common.learn_more')} <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
             </Button>
