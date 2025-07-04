@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Trash2, Send, CheckCircle } from 'lucide-react';
+import { AlertTriangle, Trash2, Send, CheckCircle, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 
 type Bill = {
   id: string;
@@ -46,6 +47,7 @@ type Bill = {
 
 export default function BillsPage() {
   const [bills, setBills] = useState<Bill[]>([]);
+  const [filteredBills, setFilteredBills] = useState<Bill[]>([]);
   const [loading, setLoading] = useState(true);
   const [firebaseConfigured, setFirebaseConfigured] = useState(true);
   const { toast } = useToast();
@@ -55,6 +57,7 @@ export default function BillsPage() {
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'upi' | 'card'>('cash');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchBills = async () => {
@@ -68,6 +71,7 @@ export default function BillsPage() {
         const querySnapshot = await getDocs(q);
         const billsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Bill[];
         setBills(billsData);
+        setFilteredBills(billsData);
       } catch (error) {
         console.error("Error fetching bills: ", error);
       } finally {
@@ -76,6 +80,14 @@ export default function BillsPage() {
     };
     fetchBills();
   }, []);
+  
+  useEffect(() => {
+    const results = bills.filter(bill =>
+      bill.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bill.billNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredBills(results);
+  }, [searchTerm, bills]);
 
   const handleMarkAsPaid = async () => {
     if (!selectedBill || !db) return;
@@ -126,8 +138,8 @@ export default function BillsPage() {
     )
   }
 
-  const unpaidBills = bills.filter(b => b.status === 'unpaid');
-  const paidBills = bills.filter(b => b.status === 'paid');
+  const unpaidBills = filteredBills.filter(b => b.status === 'unpaid');
+  const paidBills = filteredBills.filter(b => b.status === 'paid');
 
   const renderBillsTable = (billsToShow: Bill[], isUnpaid: boolean) => (
     <Table>
@@ -145,7 +157,9 @@ export default function BillsPage() {
       <TableBody>
         {billsToShow.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={isUnpaid ? 7 : 6} className="text-center h-24">No bills in this category.</TableCell>
+            <TableCell colSpan={isUnpaid ? 7 : 6} className="text-center h-24">
+                {searchTerm ? 'No matching bills found.' : 'No bills in this category.'}
+            </TableCell>
           </TableRow>
         ) : (
           billsToShow.map(bill => (
@@ -196,18 +210,29 @@ export default function BillsPage() {
               <Skeleton className="h-48 w-full" />
             </div>
           ) : (
-            <Tabs defaultValue="unpaid">
-              <TabsList>
-                <TabsTrigger value="unpaid">Unpaid Bills ({unpaidBills.length})</TabsTrigger>
-                <TabsTrigger value="paid">Paid Bills ({paidBills.length})</TabsTrigger>
-              </TabsList>
-              <TabsContent value="unpaid">
-                  {renderBillsTable(unpaidBills, true)}
-              </TabsContent>
-              <TabsContent value="paid">
-                  {renderBillsTable(paidBills, false)}
-              </TabsContent>
-            </Tabs>
+            <>
+                <div className="relative mb-4">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                    placeholder="Search by student name or bill number..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                    />
+                </div>
+                <Tabs defaultValue="unpaid">
+                <TabsList>
+                    <TabsTrigger value="unpaid">Unpaid Bills ({unpaidBills.length})</TabsTrigger>
+                    <TabsTrigger value="paid">Paid Bills ({paidBills.length})</TabsTrigger>
+                </TabsList>
+                <TabsContent value="unpaid">
+                    {renderBillsTable(unpaidBills, true)}
+                </TabsContent>
+                <TabsContent value="paid">
+                    {renderBillsTable(paidBills, false)}
+                </TabsContent>
+                </Tabs>
+            </>
           )}
         </CardContent>
       </Card>

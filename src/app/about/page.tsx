@@ -3,14 +3,24 @@
 
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Target, History, Building, Landmark, Info } from 'lucide-react';
+import { Target, History, Building, Landmark, Info, UserCog, User, Star, Mail, Phone, MessageCircle } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
 
 const directorKeys = ['mritunjay', 'sadanand'];
 const directorImages: { [key: string]: { image: string, dataAiHint: string } } = {
   mritunjay: { image: 'https://placehold.co/300x300.png', dataAiHint: 'male director' },
   sadanand: { image: 'https://placehold.co/300x300.png', dataAiHint: 'male director suit' },
-}
+};
+
+const mainFaculty = [
+  { key: 'priti', image: 'https://placehold.co/300x300.png', dataAiHint: 'female director' },
+  { key: 'chandan', image: 'https://placehold.co/300x300.png', dataAiHint: 'male professional' },
+  { key: 'amit', image: 'https://placehold.co/300x300.png', dataAiHint: 'male instructor' },
+];
+
+const labInstructors = ['ravi', 'archana', 'shreya', 'bindu', 'wakil', 'anand'];
+const labAssistants = ['gopani'];
+
 
 export default function AboutPage() {
   const { t } = useLanguage();
@@ -100,17 +110,42 @@ export default function AboutPage() {
                 </CardContent>
               </Card>
             </div>
-             <Card className="overflow-hidden bg-card/20 backdrop-blur-md border border-primary/20 text-white">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 font-headline text-white"><Building /> {t('about_page.location_title')}</CardTitle>
-                    <CardDescription className="text-neutral-300">{t('contact_page.address_value')}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="aspect-video w-full rounded-md overflow-hidden">
-                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3621.3979039956384!2d87.2115508!3d24.816062600000002!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39f0f4c5787f123f%3A0x744a5904b3976353!2sJharkhand%20Technical%20Institute%20Pvt.ltd!5e0!3m2!1sen!2sin!4v1751354619312!5m2!1sen!2sin" width="100%" height="100%" style={{ border:0 }} allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade"></iframe>
-                    </div>
-                </CardContent>
-             </Card>
+            <div className="space-y-8">
+              <Card className="bg-card/20 backdrop-blur-md border border-primary/20 text-white">
+                  <CardHeader>
+                      <CardTitle className="flex items-center gap-2 font-headline text-white"><Building /> {t('about_page.offices_title')}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                      <div>
+                          <h3 className="font-semibold text-primary">{t('about_page.corporate_office')}</h3>
+                          <p className="text-neutral-300">{t('about_page.corporate_office_address')}</p>
+                      </div>
+                      <div>
+                          <h3 className="font-semibold text-primary">{t('about_page.asc_office')}</h3>
+                          <p className="text-neutral-300">{t('about_page.asc_office_address')}</p>
+                      </div>
+                  </CardContent>
+              </Card>
+              <Card className="bg-card/20 backdrop-blur-md border border-primary/20 text-white">
+                  <CardHeader>
+                      <CardTitle className="flex items-center gap-2 font-headline text-white"><Phone /> {t('contact_page.info_title')}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                      <div>
+                          <h3 className="font-semibold text-primary flex items-center gap-2"><Mail className="w-5 h-5"/> {t('contact_page.email_title')}</h3>
+                          <p className="text-neutral-300">{t('contact_page.email_value')}</p>
+                      </div>
+                      <div>
+                          <h3 className="font-semibold text-primary flex items-center gap-2"><Phone className="w-5 h-5"/> {t('contact_page.call_title')}</h3>
+                          <p className="text-neutral-300">{t('contact_page.call_value')}</p>
+                      </div>
+                      <div>
+                          <h3 className="font-semibold text-primary flex items-center gap-2"><MessageCircle className="w-5 h-5" /> {t('contact_page.whatsapp_title')}</h3>
+                          <p className="text-neutral-300">{t('contact_page.whatsapp_value')}</p>
+                      </div>
+                  </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </section>
@@ -153,6 +188,58 @@ export default function AboutPage() {
               )
             })}
           </div>
+        </div>
+      </section>
+
+      {/* Faculty Section */}
+      <section className="relative py-16 md:py-24">
+        <Image
+            src="https://raw.githubusercontent.com/akm12109/image_bg_assets/main/JTI/jti%20(5).png"
+            alt="Faculty background"
+            fill
+            className="object-cover"
+            data-ai-hint="team diverse"
+        />
+        <div className="absolute inset-0 bg-black/80" />
+        <div className="relative container mx-auto px-4 md:px-6 text-white">
+            <div className="text-center">
+                <h2 className="text-3xl md:text-4xl font-bold font-headline">{t('about_page.faculty_title')}</h2>
+                <p className="mt-4 max-w-2xl mx-auto text-neutral-200">{t('about_page.faculty_subtitle')}</p>
+            </div>
+            
+            <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-4xl mx-auto">
+                {mainFaculty.map((member) => (
+                    <Card key={member.key} className="text-center bg-card/20 backdrop-blur-md border border-primary/20">
+                        <CardContent className="p-6">
+                            <Image
+                                src={member.image}
+                                alt={t(`about_page.faculty.${member.key}.name`)}
+                                width={120}
+                                height={120}
+                                className="rounded-full mx-auto mb-4 border-4 border-primary/20"
+                                data-ai-hint={member.dataAiHint}
+                            />
+                            <h3 className="text-xl font-bold font-headline">{t(`about_page.faculty.${member.key}.name`)}</h3>
+                            <p className="text-primary font-medium">{t(`about_page.faculty.${member.key}.role`)}</p>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+
+            <div className="mt-16 max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12">
+                 <div>
+                    <h3 className="text-2xl font-bold font-headline text-center mb-6 flex items-center justify-center gap-2"><UserCog className="w-6 h-6"/> {t('about_page.faculty.lab_instructors_title')}</h3>
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-center text-neutral-200">
+                        {labInstructors.map((key) => <p key={key}>{t(`about_page.faculty.${key}.name`)}</p>)}
+                    </div>
+                </div>
+                 <div>
+                    <h3 className="text-2xl font-bold font-headline text-center mb-6 flex items-center justify-center gap-2"><Star className="w-6 h-6" /> {t('about_page.faculty.lab_assistant_title')}</h3>
+                    <div className="text-center text-neutral-200">
+                        <p>{t(`about_page.faculty.${labAssistants[0]}.name`)}</p>
+                    </div>
+                </div>
+            </div>
         </div>
       </section>
     </>

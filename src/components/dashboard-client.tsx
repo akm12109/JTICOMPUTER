@@ -6,6 +6,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   Table,
@@ -19,10 +20,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/use-language";
-import { User, Mail, Phone, Home, Calendar, BookOpen, GraduationCap, Megaphone } from 'lucide-react';
+import { User, Mail, Phone, Home, Calendar, BookOpen, GraduationCap, Megaphone, ArrowRight, Briefcase } from 'lucide-react';
 import { format } from 'date-fns';
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
+import Link from "next/link";
 
 type Student = {
   uid: string;
@@ -105,21 +107,41 @@ export default function DashboardClient({ student, bills, notices }: DashboardCl
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                <Card className="lg:col-span-1">
-                    <CardHeader>
-                        <CardTitle className="font-headline">{t('dashboard_page.profile_title')}</CardTitle>
-                        <CardDescription>{t('dashboard_page.profile_desc')}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <DetailRow icon={User} label="Father's Name" value={student.fatherName} />
-                        <DetailRow icon={Mail} label="Email" value={student.email} />
-                        <DetailRow icon={Phone} label="Phone Number" value={student.phone} />
-                        <DetailRow icon={Calendar} label="Date of Birth" value={student.dob ? format(student.dob.toDate(), 'PPP') : 'N/A'} />
-                        <DetailRow icon={Home} label="Address" value={student.address} />
-                        <DetailRow icon={GraduationCap} label="Last Qualification" value={student.lastQualification} />
-                        <DetailRow icon={BookOpen} label="Course Applied For" value={student.courseAppliedFor} />
-                    </CardContent>
-                </Card>
+                <div className="lg:col-span-1 space-y-8">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="font-headline">{t('dashboard_page.profile_title')}</CardTitle>
+                            <CardDescription>{t('dashboard_page.profile_desc')}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <DetailRow icon={User} label="Father's Name" value={student.fatherName} />
+                            <DetailRow icon={Mail} label="Email" value={student.email} />
+                            <DetailRow icon={Phone} label="Phone Number" value={student.phone} />
+                            <DetailRow icon={Calendar} label="Date of Birth" value={student.dob ? format(student.dob.toDate(), 'PPP') : 'N/A'} />
+                            <DetailRow icon={Home} label="Address" value={student.address} />
+                            <DetailRow icon={GraduationCap} label="Last Qualification" value={student.lastQualification} />
+                            <DetailRow icon={BookOpen} label="Course Applied For" value={student.courseAppliedFor} />
+                        </CardContent>
+                    </Card>
+                     <Card className="bg-primary/10 border-primary/20">
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <Briefcase className="h-6 w-6 text-primary" />
+                                <CardTitle className="font-headline text-white">{t('careers_page.card_title')}</CardTitle>
+                            </div>
+                            <CardDescription className="text-neutral-300">{t('careers_page.card_desc')}</CardDescription>
+                        </CardHeader>
+                        <CardFooter>
+                            <Button asChild className="w-full" variant="secondary">
+                                <Link href="/dashboard/careers">
+                                    {t('careers_page.card_button')}
+                                    <ArrowRight className="ml-2 h-4 w-4" />
+                                </Link>
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                </div>
+
 
                 <Card className="lg:col-span-2">
                     <CardHeader>

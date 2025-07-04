@@ -1,6 +1,6 @@
 
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { collection, getDocs, orderBy, query, where, deleteDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db, firebaseConfig } from '@/lib/firebase';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, UserCheck, Trash2 } from 'lucide-react';
+import { AlertTriangle, UserCheck, Trash2, Eye, Loader2, Download, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -23,6 +23,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { initializeApp, getApps, getApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import { ApplicationPreview } from '@/components/application-preview';
 
 type Application = {
   id: string;
@@ -35,6 +38,7 @@ type Application = {
 
 export default function ApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
+  const [filteredApplications, setFilteredApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [firebaseConfigured, setFirebaseConfigured] = useState(true);
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
@@ -42,6 +46,12 @@ export default function ApplicationsPage() {
   const [tempPassword, setTempPassword] = useState('');
   const [isModalOpen, setModalOpen] = useState(false);
   const { toast } = useToast();
+
+  const [isPreviewOpen, setPreviewOpen] = useState(false);
+  const [appToPreview, setAppToPreview] = useState<Application | null>(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const applicationRef = useRef<HTMLDivElement>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchApplications = async () => {
@@ -51,16 +61,14 @@ export default function ApplicationsPage() {
         return;
       }
       try {
-        // The original query with orderBy required a composite index in Firestore.
-        // By removing orderBy and sorting on the client, we avoid this requirement.
         const q = query(collection(db, 'applications'), where('status', '==', 'pending'));
         const querySnapshot = await getDocs(q);
         const appsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Application[];
         
-        // Sort applications by date on the client side
         appsData.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
         
         setApplications(appsData);
+        setFilteredApplications(appsData);
       } catch (error) {
         console.error("Error fetching applications: ", error);
         toast({
@@ -74,6 +82,55 @@ export default function ApplicationsPage() {
     };
     fetchApplications();
   }, [toast]);
+
+  useEffect(() => {
+    const results = applications.filter(app =>
+      app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.courseAppliedFor.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredApplications(results);
+  }, [searchTerm, applications]);
+
+  const handleGenerateApplicationPdf = async () => {
+    const element = applicationRef.current;
+    if (!element || !appToPreview) {
+        toast({ variant: 'destructive', title: 'Could not find application to generate PDF.' });
+        return;
+    }
+    setIsGeneratingPdf(true);
+    try {
+        const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+        const imgData = canvas.toDataURL('image/png');
+        
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const ratio = canvasWidth / canvasHeight;
+
+        let finalWidth = pdfWidth - 20; // 10mm margin on each side
+        let finalHeight = finalWidth / ratio;
+
+        if (finalHeight > pdfHeight - 20) { // 10mm margin top/bottom
+            finalHeight = pdfHeight - 20;
+            finalWidth = finalHeight * ratio;
+        }
+
+        const xOffset = (pdfWidth - finalWidth) / 2;
+        const yOffset = 10;
+
+        pdf.addImage(imgData, 'PNG', xOffset, yOffset, finalWidth, finalHeight);
+        pdf.save(`Application-Form-${appToPreview.name}.pdf`);
+
+    } catch (error) {
+        console.error("Error generating PDF: ", error);
+        toast({ variant: 'destructive', title: 'Failed to generate PDF.' });
+    } finally {
+        setIsGeneratingPdf(false);
+    }
+  };
 
   const handleAdmitStudent = async () => {
     if (!selectedApp || !tempPassword || !db) return;
@@ -150,6 +207,15 @@ JTI Godda Admission Team
         <CardDescription>Review and approve new student admission applications.</CardDescription>
       </CardHeader>
       <CardContent>
+        <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name, email, or course..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+        </div>
         {loading ? (
           <div className="space-y-2">
             <Skeleton className="h-10 w-full" />
@@ -168,18 +234,23 @@ JTI Godda Admission Team
               </TableRow>
             </TableHeader>
             <TableBody>
-              {applications.length === 0 ? (
+              {filteredApplications.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center h-24">No pending applications.</TableCell>
+                  <TableCell colSpan={5} className="text-center h-24">
+                    {searchTerm ? "No matching applications found." : "No pending applications."}
+                  </TableCell>
                 </TableRow>
               ) : (
-                applications.map(app => (
+                filteredApplications.map(app => (
                   <TableRow key={app.id}>
                     <TableCell>{format(app.createdAt.toDate(), 'PPP')}</TableCell>
                     <TableCell className="font-medium">{app.name}</TableCell>
                     <TableCell>{app.email}</TableCell>
                     <TableCell>{app.courseAppliedFor}</TableCell>
                     <TableCell className="text-right">
+                       <Button variant="ghost" size="icon" onClick={() => { setAppToPreview(app); setPreviewOpen(true);}}>
+                           <Eye className="h-4 w-4" />
+                       </Button>
                        <Button size="sm" onClick={() => { setSelectedApp(app); setModalOpen(true); }}>
                           <UserCheck className="mr-2 h-4 w-4" /> Admit
                        </Button>
@@ -217,6 +288,29 @@ JTI Godda Admission Team
               {isAdmitting ? 'Admitting...' : 'Confirm Admission'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
+    <Dialog open={isPreviewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-4xl">
+            <DialogHeader>
+                <DialogTitle>Application Preview</DialogTitle>
+                <DialogDescription>
+                    PDF preview of {appToPreview?.name}'s application form.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="max-h-[70vh] overflow-y-auto p-1">
+                <div ref={applicationRef}>
+                    {appToPreview && <ApplicationPreview application={appToPreview} />}
+                </div>
+            </div>
+            <DialogFooter>
+                <Button variant="secondary" onClick={() => setPreviewOpen(false)}>Close</Button>
+                <Button onClick={handleGenerateApplicationPdf} disabled={isGeneratingPdf}>
+                    {isGeneratingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                    Download PDF
+                </Button>
+            </DialogFooter>
         </DialogContent>
     </Dialog>
     </>

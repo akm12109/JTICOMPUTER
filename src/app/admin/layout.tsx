@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
@@ -5,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import AdminNav from '@/components/admin-nav';
 import { Loader2 } from 'lucide-react';
+import AdminMobileNav from '@/components/admin-mobile-nav';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -32,9 +34,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex min-h-screen bg-muted/40">
       <AdminNav />
-      <main className="flex-1 p-4 sm:p-6 md:p-8">
+      <main className="flex-1 p-4 sm:p-6 md:p-8 pb-20 md:pb-8">
         {children}
       </main>
+      <AdminMobileNav />
     </div>
   );
 }

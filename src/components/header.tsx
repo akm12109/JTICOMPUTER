@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '@/components/ui/sheet';
 import { Menu, LogOut, LayoutDashboard, ChevronDown } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
 import LanguageSwitcher from './language-switcher';
@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import ThemeSwitcher from './theme-switcher';
 
 const navItems = [
   { href: '/', labelKey: 'nav.home' },
@@ -31,6 +32,7 @@ const navItems = [
     ],
   },
   { href: '/about', labelKey: 'nav.about' },
+  { href: '/enquiry', labelKey: 'nav.enquiry' },
   { href: '/contact', labelKey: 'nav.contact' },
 ];
 
@@ -63,7 +65,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
       <div className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <JtiLogo size="large" />
+          <JtiLogo size="medium" />
         </Link>
 
         {/* Desktop Navigation */}
@@ -104,6 +106,7 @@ export default function Header() {
         </nav>
         
         <div className="hidden md:flex items-center gap-4">
+           <ThemeSwitcher />
            <LanguageSwitcher />
           {isLoggedIn ? (
             <>
@@ -135,14 +138,18 @@ export default function Header() {
                 <span className="sr-only">Toggle navigation menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right">
-              <div className="flex flex-col gap-6 p-6">
+            <SheetContent side="left">
+              <SheetHeader>
+                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                <SheetDescription className="sr-only">Main navigation for the website, including links to pages and user actions.</SheetDescription>
+              </SheetHeader>
+              <div className="flex flex-col gap-6 h-full">
                 <Link href="/" className="flex items-center gap-2">
                   <JtiLogo size="medium" />
                 </Link>
                 <nav className="flex flex-col gap-4">
                   {navItems.flatMap((item) => 
-                    item.isDropdown ? item.items! : [item]
+                    item.isDropdown ? item.items!.map(sub => ({ ...sub, labelKey: `${sub.labelKey}` })) : [item]
                   ).map((route) => (
                     <Link
                       key={route.href}
@@ -161,10 +168,11 @@ export default function Header() {
                     </Link>
                   )}
                 </nav>
-                 <div className="mt-4">
-                    <LanguageSwitcher />
-                  </div>
-                <div className="flex flex-col gap-2 mt-auto">
+                <div className="mt-auto flex flex-col gap-4">
+                    <div className="flex gap-2">
+                        <ThemeSwitcher />
+                        <LanguageSwitcher />
+                    </div>
                     {isLoggedIn ? (
                         <>
                           <Button asChild>

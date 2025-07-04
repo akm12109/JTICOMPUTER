@@ -1,6 +1,7 @@
+
 'use client';
 
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin, MessageCircle } from 'lucide-react';
 import ContactForm from '@/components/contact-form';
 import { useLanguage } from '@/hooks/use-language';
 import Image from 'next/image';
@@ -33,8 +34,15 @@ export default function ContactPage() {
               <div className="flex items-start gap-4">
                 <MapPin className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
                 <div>
-                  <h3 className="font-semibold text-white">{t('contact_page.address_title')}</h3>
+                  <h3 className="font-semibold text-white">{t('contact_page.corporate_office_title')}</h3>
                   <p className="text-neutral-300">{t('contact_page.address_value')}</p>
+                </div>
+              </div>
+               <div className="flex items-start gap-4">
+                <MapPin className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-white">{t('contact_page.asc_address_title')}</h3>
+                  <p className="text-neutral-300">{t('contact_page.asc_address_value')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
@@ -49,6 +57,13 @@ export default function ContactPage() {
                 <div>
                   <h3 className="font-semibold text-white">{t('contact_page.call_title')}</h3>
                   <p className="text-neutral-300">{t('contact_page.call_value')}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <MessageCircle className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-white">{t('contact_page.whatsapp_title')}</h3>
+                  <p className="text-neutral-300">{t('contact_page.whatsapp_value')}</p>
                 </div>
               </div>
             </div>

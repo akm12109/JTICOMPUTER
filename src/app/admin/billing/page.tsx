@@ -13,7 +13,7 @@ import QRCode from 'qrcode';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -23,9 +23,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import JtiLogo from '@/components/jti-logo';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type Admission = {
   uid: string;
@@ -91,13 +91,7 @@ const BillPreview = ({ bill }: { bill: BillDetails }) => {
         <div className="p-8 border rounded-lg bg-white text-black font-sans">
             <div className="flex justify-between items-center pb-4 mb-4 border-b-2 border-primary">
                 <div className="flex items-center gap-4">
-                    <JtiLogo size="medium" textColor="text-black" />
-                    <div>
-                        <h2 className="text-2xl font-bold text-primary font-headline">Jharkhand Technical Institute</h2>
-                        <p className="text-xs text-gray-600">H/O- Mritunjay Prasad, Pathra Road, Sarkanda</p>
-                        <p className="text-xs text-gray-600">Godda, Jharkhand 814133</p>
-                        <p className="text-xs text-gray-600">Email: info@jtigodda.com | Phone: +91 82946 38712</p>
-                    </div>
+                    <JtiLogo size="medium" />
                 </div>
                 <h1 className="text-4xl font-extrabold text-gray-300 uppercase tracking-widest">Invoice</h1>
             </div>
@@ -509,38 +503,18 @@ export default function BillingPage() {
                     render={({ field }) => (
                       <FormItem className="space-y-3">
                         <FormLabel>Payment Method</FormLabel>
-                        <FormControl>
-                          <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="flex flex-col space-y-1"
-                          >
-                            <FormItem className="flex items-center space-x-3 space-y-0">
-                              <FormControl>
-                                <RadioGroupItem value="cash" />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                Cash
-                              </FormLabel>
-                            </FormItem>
-                            <FormItem className="flex items-center space-x-3 space-y-0">
-                              <FormControl>
-                                <RadioGroupItem value="upi" />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                UPI
-                              </FormLabel>
-                            </FormItem>
-                            <FormItem className="flex items-center space-x-3 space-y-0">
-                              <FormControl>
-                                <RadioGroupItem value="card" />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                Card
-                              </FormLabel>
-                            </FormItem>
-                          </RadioGroup>
-                        </FormControl>
+                         <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                <SelectValue placeholder="Select a payment method" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="cash">Cash</SelectItem>
+                                <SelectItem value="upi">UPI</SelectItem>
+                                <SelectItem value="card">Card</SelectItem>
+                            </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}

@@ -4,7 +4,7 @@ import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, Eye, Search } from 'lucide-react';
@@ -12,50 +12,54 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 
-type Admission = {
-  id: string;
+type Profile = {
   uid: string;
   name: string;
   email: string;
-  createdAt: { toDate: () => Date };
+  courseAppliedFor: string;
+  updatedAt: { toDate: () => Date };
 };
 
-export default function AdmissionsPage() {
-  const [admissions, setAdmissions] = useState<Admission[]>([]);
-  const [filteredAdmissions, setFilteredAdmissions] = useState<Admission[]>([]);
+export default function CareerProfilesPage() {
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [filteredProfiles, setFilteredProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [firebaseConfigured, setFirebaseConfigured] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    const fetchAdmissions = async () => {
+    const fetchProfiles = async () => {
       if (!db) {
         setFirebaseConfigured(false);
         setLoading(false);
         return;
       }
       try {
-        const q = query(collection(db, 'admissions'), orderBy('createdAt', 'desc'));
+        const q = query(collection(db, 'admissions'), orderBy('updatedAt', 'desc'));
         const querySnapshot = await getDocs(q);
-        const admissionsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Admission[];
-        setAdmissions(admissionsData);
-        setFilteredAdmissions(admissionsData);
+        
+        const profilesData = querySnapshot.docs
+            .map(doc => ({ uid: doc.id, ...doc.data() }))
+            .filter(doc => doc.updatedAt) as Profile[];
+
+        setProfiles(profilesData);
+        setFilteredProfiles(profilesData);
       } catch (error) {
-        console.error("Error fetching admissions: ", error);
+        console.error("Error fetching career profiles: ", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchAdmissions();
+    fetchProfiles();
   }, []);
   
   useEffect(() => {
-    const results = admissions.filter(admission =>
-      admission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      admission.email.toLowerCase().includes(searchTerm.toLowerCase())
+    const results = profiles.filter(profile =>
+      profile.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      profile.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    setFilteredAdmissions(results);
-  }, [searchTerm, admissions]);
+    setFilteredProfiles(results);
+  }, [searchTerm, profiles]);
 
   if (!firebaseConfigured) {
     return (
@@ -72,11 +76,11 @@ export default function AdmissionsPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Admitted Students</CardTitle>
-        <CardDescription>List of all students who have submitted an admission form.</CardDescription>
+        <CardTitle>Career Profiles</CardTitle>
+        <CardDescription>List of students who have filled out their detailed career profile.</CardDescription>
       </CardHeader>
       <CardContent>
-         <div className="relative mb-4">
+        <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search by name or email..."
@@ -95,28 +99,32 @@ export default function AdmissionsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Admission Date</TableHead>
+                <TableHead>Last Updated</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Course</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAdmissions.length === 0 ? (
+              {filteredProfiles.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center h-24">
-                    {searchTerm ? "No matching students found." : "No admission applications yet."}
-                  </TableCell>
+                  <TableCell colSpan={5} className="text-center h-24">
+                    {searchTerm ? 'No matching profiles found.' : 'No career profiles submitted yet.'}
+                    </TableCell>
                 </TableRow>
               ) : (
-                filteredAdmissions.map(admission => (
-                  <TableRow key={admission.id}>
-                    <TableCell>{format(admission.createdAt.toDate(), 'PPP')}</TableCell>
-                    <TableCell className="font-medium">{admission.name}</TableCell>
-                    <TableCell>{admission.email}</TableCell>
+                filteredProfiles.map(profile => (
+                  <TableRow key={profile.uid}>
+                    <TableCell>
+                      {profile.updatedAt && isValid(profile.updatedAt.toDate()) ? format(profile.updatedAt.toDate(), 'PPP') : 'N/A'}
+                    </TableCell>
+                    <TableCell className="font-medium">{profile.name}</TableCell>
+                    <TableCell>{profile.email}</TableCell>
+                    <TableCell>{profile.courseAppliedFor}</TableCell>
                     <TableCell className="text-right">
                        <Button asChild variant="ghost" size="icon">
-                        <Link href={`/admin/students/${admission.uid}`}>
+                        <Link href={`/admin/students/${profile.uid}`}>
                           <Eye className="h-4 w-4" />
                           <span className="sr-only">View Details</span>
                         </Link>

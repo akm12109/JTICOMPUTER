@@ -3,50 +3,76 @@ import { cn } from '@/lib/utils';
 interface JtiLogoProps {
   className?: string;
   size?: 'small' | 'medium' | 'large';
-  textColor?: string;
 }
 
-export default function JtiLogo({ className, size = 'medium', textColor = "text-primary-foreground" }: JtiLogoProps) {
+export default function JtiLogo({ className, size = 'medium' }: JtiLogoProps) {
   const sizeClasses = {
-    small: 'w-20 h-12 text-xl',
-    medium: 'w-24 h-14 text-2xl',
-    large: 'w-28 h-16 text-3xl',
+    small: { width: 150, height: 33 },
+    medium: { width: 160, height: 35.2 },
+    large: { width: 180, height: 39.6 },
   };
-  
-  const ballSizeClasses = {
-      small: 'w-5 h-5',
-      medium: 'w-6 h-6',
-      large: 'w-7 h-7'
-  }
 
-  const goddaTextSizeClasses = {
-    small: 'text-[0.6rem] mt-1',
-    medium: 'text-[0.7rem] mt-1',
-    large: 'text-[0.8rem] mt-1.5',
-  }
+  const selectedSize = sizeClasses[size];
 
   return (
-    <div className={cn('relative font-headline font-bold select-none flex-shrink-0', sizeClasses[size], className)}>
-      <svg className="absolute w-0 h-0">
-        <defs>
-          <filter id="gooey-filter">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="blur" />
-            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9" result="goo" />
-            <feComposite in="SourceGraphic" in2="goo" operator="atop" />
-          </filter>
-        </defs>
+    <div className={cn('flex-shrink-0', className)} style={{ width: selectedSize.width, height: selectedSize.height }}>
+      <svg
+        width="100%"
+        height="100%"
+        viewBox="0 0 300 66"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-label="JTI Computer Education Logo"
+      >
+        <style>
+          {`
+            .jti-text { font-family: 'Arial', sans-serif; font-weight: bold; fill: hsl(var(--primary)); }
+            .subtitle-text { font-family: 'Arial', sans-serif; fill: hsl(var(--muted-foreground)); }
+            .primary-stroke { stroke: hsl(var(--primary)); }
+          `}
+        </style>
+        
+        {/* Icon part */}
+        <g transform="translate(33, 33)">
+          {/* Circle outline */}
+          <circle cx="0" cy="0" r="30" className="primary-stroke" strokeWidth="2.5" fill="none" />
+          
+          {/* Laptop */}
+          <g>
+             {/* Laptop base with keyboard */}
+            <path d="M -25 10 L 25 10 L 22 20 L -22 20 Z" fill="#6B7280" />
+            <rect x="-21" y="11" width="42" height="8" fill="#10B981" rx="1"/>
+
+            {/* Laptop screen */}
+            <rect x="-23" y="-15" width="46" height="25" fill="#6B7280" rx="1" />
+            <rect x="-21" y="-13" width="42" height="21" fill="white" />
+            
+            {/* Teacher icon */}
+            <g transform="translate(0, -4)" fill="#374151">
+              <path d="M -5 5 Q -5 0 0 0 T 5 5 V 10 H -5 Z" />
+              <circle cx="0" cy="-3" r="3" />
+              <path d="M 5 6 L 10 1 L 18 -2" stroke="#374151" strokeWidth="2" fill="none" strokeLinecap="round" />
+            </g>
+          </g>
+        </g>
+        
+        {/* Text part */}
+        <g transform="translate(85, 0)">
+          {/* JTI */}
+          <text x="0" y="42" className="jti-text" fontSize="50">JTI</text>
+          
+          {/* Vertical line */}
+          <line x1="88" y1="8" x2="88" y2="40" className="primary-stroke" strokeWidth="2.5" />
+          
+          {/* COMPUTER EDUCATION */}
+          <text x="98" y="18" className="jti-text" letterSpacing="1" fontSize="15">COMPUTER</text>
+          <line x1="98" y1="23" x2="238" y2="23" className="primary-stroke" strokeWidth="1.5" />
+          <text x="98" y="38" className="jti-text" letterSpacing="1" fontSize="15">EDUCATION</text>
+          
+          {/* Subtitle */}
+          <text x="98" y="52" className="subtitle-text" fontSize="8">Education & Training Division of</text>
+          <text x="98" y="62" className="subtitle-text" fontSize="8">Jharkhand Technical Institute Pvt. Ltd.</text>
+        </g>
       </svg>
-      <div className="logo-container w-full h-full">
-         <div className={cn("goo-ball top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2", ballSizeClasses[size])}></div>
-         <div className={cn("goo-ball top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2", ballSizeClasses[size])}></div>
-         <div className={cn("goo-ball top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2", ballSizeClasses[size])}></div>
-      </div>
-      <div className={cn("absolute inset-0 flex flex-col items-center justify-center z-10 leading-none", textColor)}>
-        <span>JTI</span>
-        <span className={cn('font-normal tracking-widest uppercase', goddaTextSizeClasses[size])}>
-            Godda
-        </span>
-      </div>
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { LanguageProvider } from '@/context/language-context';
 import { AuthProvider } from '@/context/auth-context';
 import WelcomeHandler from '@/components/welcome-handler';
+import { ThemeProvider } from '@/context/theme-provider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -22,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full dark">
+    <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -41,17 +42,24 @@ export default function RootLayout({
           inter.variable
         )}
       >
-        <LanguageProvider>
-          <AuthProvider>
-            <WelcomeHandler />
-            <div className="flex flex-col min-h-screen">
-              <Header />
-              <main className="flex-grow">{children}</main>
-              <Footer />
-            </div>
-            <Toaster />
-          </AuthProvider>
-        </LanguageProvider>
+        <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+        >
+            <LanguageProvider>
+            <AuthProvider>
+                <WelcomeHandler />
+                <div className="flex flex-col min-h-screen">
+                <Header />
+                <main className="flex-grow">{children}</main>
+                <Footer />
+                </div>
+                <Toaster />
+            </AuthProvider>
+            </LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

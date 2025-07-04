@@ -1,13 +1,13 @@
 
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc, collection, query, where, getDocs, orderBy, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, ArrowLeft, Mail, User, Calendar, Receipt, Phone, Home, BookOpen, GraduationCap, Edit, Trash2 } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Mail, User, Calendar, Receipt, Phone, Home, BookOpen, GraduationCap, Edit, Trash2, Download, Loader2, Landmark, Percent, Hash, VenetianMask, FileBadge, Image as ImageIcon } from 'lucide-react';
 import { format, isValid } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -17,6 +17,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { CareerProfilePreview } from '@/components/career-profile-preview';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import Image from 'next/image';
 
 type Student = {
   uid: string;
@@ -26,9 +30,22 @@ type Student = {
   phone: string;
   address: string;
   dob: { toDate: () => Date };
-  lastQualification: string;
   courseAppliedFor: string;
   createdAt: { toDate: () => Date };
+  slNo?: string;
+  session?: string;
+  sex?: string;
+  nationality?: string;
+  photoDataUri?: string;
+  signatureDataUri?: string;
+  qualifications?: {
+    examination: string;
+    board: string;
+    passingYear: string;
+    division: string;
+    percentage: string;
+  }[];
+  [key: string]: any;
 };
 
 type Bill = {
@@ -54,6 +71,10 @@ export default function StudentDetailPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [editableStudent, setEditableStudent] = useState<Partial<Student>>({});
 
+  const [isProfileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     if (!studentId || !db) {
@@ -72,7 +93,7 @@ export default function StudentDetailPage() {
           setError('Student not found.');
           return;
         }
-        const studentData = studentDocSnap.data() as Student;
+        const studentData = { uid: studentDocSnap.id, ...studentDocSnap.data() } as Student;
         setStudent(studentData);
         setEditableStudent(studentData);
 
@@ -95,6 +116,47 @@ export default function StudentDetailPage() {
 
     fetchData();
   }, [studentId]);
+
+  const handleGenerateProfilePdf = async () => {
+    const element = profileRef.current;
+    if (!element || !student) {
+        toast({ variant: 'destructive', title: 'Could not find profile to generate PDF.' });
+        return;
+    }
+    setIsGeneratingPdf(true);
+    try {
+        const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+        const imgData = canvas.toDataURL('image/png');
+        
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const ratio = canvasWidth / canvasHeight;
+
+        let finalWidth = pdfWidth;
+        let finalHeight = finalWidth / ratio;
+        
+        if (finalHeight > pdfHeight) {
+            finalHeight = pdfHeight;
+            finalWidth = finalHeight * ratio;
+        }
+
+        const xOffset = (pdfWidth - finalWidth) / 2;
+        const yOffset = (pdfHeight - finalHeight) / 2;
+
+        pdf.addImage(imgData, 'PNG', xOffset, yOffset, finalWidth, finalHeight);
+        pdf.save(`Career-Profile-${student.name}.pdf`);
+
+    } catch (error) {
+        console.error("Error generating PDF: ", error);
+        toast({ variant: 'destructive', title: 'Failed to generate PDF.' });
+    } finally {
+        setIsGeneratingPdf(false);
+    }
+  };
+
 
   const handleUpdateStudent = async () => {
     if (!studentId || !db) return;
@@ -149,8 +211,6 @@ export default function StudentDetailPage() {
   const handleDeleteStudent = async () => {
       if (!studentId || !db) return;
       try {
-        // Note: This only deletes the Firestore record, not the Auth user.
-        // Deleting Auth user requires secure handling, likely via a Cloud Function.
         await deleteDoc(doc(db, 'admissions', studentId));
         toast({ title: "Student Removed", description: "Student record has been deleted." });
         router.push('/admin/admissions');
@@ -220,6 +280,9 @@ export default function StudentDetailPage() {
                 <Button variant="outline" onClick={() => { setEditableStudent(student); setEditDialogOpen(true); }}>
                     <Edit className="mr-2 h-4 w-4" /> Edit
                 </Button>
+                <Button variant="secondary" onClick={() => setProfileDialogOpen(true)}>
+                    <Download className="mr-2 h-4 w-4" /> Download Profile
+                </Button>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
                        <Button variant="destructive">
@@ -248,9 +311,27 @@ export default function StudentDetailPage() {
                     <CardTitle className="flex items-center gap-2"><User /> Personal Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                    <div className="flex gap-4">
+                        {student.photoDataUri ? (
+                            <Image src={student.photoDataUri} alt="Student photo" width={80} height={80} className="rounded-md border p-1" />
+                        ) : (
+                            <div className="w-20 h-20 rounded-md border p-1 bg-muted flex items-center justify-center">
+                                <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                        )}
+                        {student.signatureDataUri ? (
+                            <Image src={student.signatureDataUri} alt="Student signature" width={80} height={80} className="rounded-md border p-1 object-contain" />
+                        ) : (
+                            <div className="w-20 h-20 rounded-md border p-1 bg-muted flex items-center justify-center">
+                                <FileBadge className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                        )}
+                    </div>
                     <DetailRow icon={User} label="Student Name" value={student.name} />
                     <DetailRow icon={User} label="Father's Name" value={student.fatherName} />
                     <DetailRow icon={Calendar} label="Date of Birth" value={student.dob ? format(student.dob.toDate(), 'PPP') : 'N/A'} />
+                    <DetailRow icon={VenetianMask} label="Sex" value={student.sex} />
+                    <DetailRow icon={Landmark} label="Nationality" value={student.nationality} />
                     <DetailRow icon={Mail} label="Email" value={student.email} />
                     <DetailRow icon={Phone} label="Phone Number" value={student.phone} />
                     <DetailRow icon={Home} label="Address" value={student.address} />
@@ -261,7 +342,8 @@ export default function StudentDetailPage() {
                     <CardTitle className="flex items-center gap-2"><GraduationCap /> Academic Info</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <DetailRow icon={GraduationCap} label="Last Qualification" value={student.lastQualification} />
+                    <DetailRow icon={Hash} label="Serial No." value={student.slNo} />
+                    <DetailRow icon={Calendar} label="Session" value={student.session} />
                     <DetailRow icon={BookOpen} label="Course Applied For" value={student.courseAppliedFor} />
                     <DetailRow icon={Calendar} label="Admission Date" value={format(student.createdAt.toDate(), 'PPP')} />
                 </CardContent>
@@ -287,6 +369,41 @@ export default function StudentDetailPage() {
                 <CardFooter>
                     <Button className="w-full" onClick={() => router.push(`/admin/billing?studentId=${student.uid}&studentName=${student.name}&studentEmail=${student.email}`)}>Generate New Bill</Button>
                 </CardFooter>
+            </Card>
+            <Card className="md:col-span-2 lg:col-span-3">
+                <CardHeader>
+                    <CardTitle>Educational Qualifications</CardTitle>
+                </CardHeader>
+                <CardContent>
+                     <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Examination</TableHead>
+                                <TableHead>Board</TableHead>
+                                <TableHead>Passing Year</TableHead>
+                                <TableHead>Division</TableHead>
+                                <TableHead>% Marks</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {student.qualifications?.length ? (
+                                student.qualifications.map((q, i) => (
+                                <TableRow key={i}>
+                                    <TableCell>{q.examination}</TableCell>
+                                    <TableCell>{q.board}</TableCell>
+                                    <TableCell>{q.passingYear}</TableCell>
+                                    <TableCell>{q.division}</TableCell>
+                                    <TableCell>{q.percentage}</TableCell>
+                                </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center">No qualification details provided.</TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
             </Card>
        </div>
 
@@ -339,6 +456,14 @@ export default function StudentDetailPage() {
                 </DialogHeader>
                 <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-4">
                     <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="slNo" className="text-right">Sl. No.</Label>
+                        <Input id="slNo" value={editableStudent.slNo} onChange={handleInputChange} className="col-span-3" />
+                    </div>
+                     <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="session" className="text-right">Session</Label>
+                        <Input id="session" value={editableStudent.session} onChange={handleInputChange} className="col-span-3" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="name" className="text-right">Name</Label>
                         <Input id="name" value={editableStudent.name} onChange={handleInputChange} className="col-span-3" />
                     </div>
@@ -366,12 +491,16 @@ export default function StudentDetailPage() {
                         } onChange={handleInputChange} className="col-span-3" />
                     </div>
                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="address" className="text-right">Address</Label>
-                        <Input id="address" value={editableStudent.address} onChange={handleInputChange} className="col-span-3" />
+                        <Label htmlFor="sex" className="text-right">Sex</Label>
+                        <Input id="sex" value={editableStudent.sex} onChange={handleInputChange} className="col-span-3" />
                     </div>
                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="lastQualification" className="text-right">Qualification</Label>
-                        <Input id="lastQualification" value={editableStudent.lastQualification} onChange={handleInputChange} className="col-span-3" />
+                        <Label htmlFor="nationality" className="text-right">Nationality</Label>
+                        <Input id="nationality" value={editableStudent.nationality} onChange={handleInputChange} className="col-span-3" />
+                    </div>
+                     <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="address" className="text-right">Address</Label>
+                        <Input id="address" value={editableStudent.address} onChange={handleInputChange} className="col-span-3" />
                     </div>
                      <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="courseAppliedFor" className="text-right">Course</Label>
@@ -381,6 +510,29 @@ export default function StudentDetailPage() {
                 <DialogFooter>
                     <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
                     <Button onClick={handleUpdateStudent} disabled={isUpdating}>{isUpdating ? "Saving..." : "Save Changes"}</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        <Dialog open={isProfileDialogOpen} onOpenChange={setProfileDialogOpen}>
+            <DialogContent className="max-w-4xl">
+                <DialogHeader>
+                    <DialogTitle>Student Profile</DialogTitle>
+                    <DialogDescription>
+                        PDF preview of {student.name}'s full profile.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="max-h-[70vh] overflow-y-auto p-1">
+                    <div ref={profileRef}>
+                        <CareerProfilePreview student={student} />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="secondary" onClick={() => setProfileDialogOpen(false)}>Close</Button>
+                    <Button onClick={handleGenerateProfilePdf} disabled={isGeneratingPdf}>
+                        {isGeneratingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                        Download PDF
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

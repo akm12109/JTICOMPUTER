@@ -16,7 +16,7 @@ export default function RegisterPage() {
   const { t } = useLanguage();
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-8rem)] py-12 px-4">
-      <Card className="mx-auto max-w-lg w-full">
+      <Card className="mx-auto max-w-2xl w-full">
         <CardHeader>
           <CardTitle className="text-2xl font-headline">{t('admission_page.title')}</CardTitle>
           <CardDescription>

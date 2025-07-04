@@ -33,6 +33,12 @@ const nextConfig: NextConfig = {
         hostname: 'tse4.mm.bing.net',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
