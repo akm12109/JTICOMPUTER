@@ -3,20 +3,23 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FileText, Receipt, BellRing, Megaphone, MoreHorizontal, MessageSquare, FileStack, GalleryHorizontal, HelpCircle, Briefcase } from 'lucide-react';
+import { FileText, Receipt, BellRing, Megaphone, MoreHorizontal, MessageSquare, FileStack, GalleryHorizontal, HelpCircle, Briefcase, BookOpen, UserPlus, LayoutDashboard } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
 
 const mainNavItems = [
+    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/applications', label: 'Apps', icon: BellRing },
+    { href: '/admin/admissions', label: 'Students', icon: FileText },
     { href: '/admin/billing', label: 'Billing', icon: Receipt },
-    { href: '/admin/notices', label: 'Notices', icon: Megaphone },
-    { href: '/admin/admissions', label: 'Admitted', icon: FileText },
-    { href: '/admin/applications', label: 'Applications', icon: BellRing },
 ];
 
 const moreNavItems = [
+    { href: '/admin/add-students', label: 'Add Students', icon: UserPlus },
     { href: '/admin/bills', label: 'All Bills', icon: FileStack },
     { href: '/admin/career-profiles', label: 'Profiles', icon: Briefcase },
+    { href: '/admin/notices', label: 'Notices', icon: Megaphone },
+    { href: '/admin/notes', label: 'Notes', icon: BookOpen },
     { href: '/admin/gallery', label: 'Gallery', icon: GalleryHorizontal },
     { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
     { href: '/admin/enquiries', label: 'Enquiries', icon: HelpCircle },
@@ -31,7 +34,7 @@ export default function AdminMobileNav() {
       href={href}
       className={cn(
         'flex flex-col items-center justify-center gap-1 p-2 rounded-lg transition-colors text-muted-foreground hover:bg-muted hover:text-primary',
-        (pathname === href || (pathname !== '/admin' && pathname.startsWith(href))) && 'text-primary'
+        (href === '/admin' ? pathname === href : pathname.startsWith(href)) && 'text-primary'
       )}
     >
       <Icon className="h-5 w-5" />
@@ -71,6 +74,12 @@ export default function AdminMobileNav() {
             </button>
           </SheetTrigger>
           <SheetContent side="bottom" className="h-auto rounded-t-lg">
+             <SheetHeader>
+                <SheetTitle className="sr-only">More Options</SheetTitle>
+                <SheetDescription className="sr-only">
+                    Additional navigation links for the admin panel.
+                </SheetDescription>
+             </SheetHeader>
              <nav className="grid grid-cols-3 gap-2 p-4">
                 {moreNavItems.map(item => (
                     <MoreLink key={item.href} {...item} />

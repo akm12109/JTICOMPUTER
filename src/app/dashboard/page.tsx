@@ -1,3 +1,4 @@
+
 'use client';
 import { useEffect, useState } from 'react';
 import DashboardClient from "@/components/dashboard-client";
@@ -22,12 +23,12 @@ type Student = {
   createdAt: { toDate: () => Date };
 };
 
-type Bill = {
+type Receipt = {
   id: string;
-  billNumber: string;
-  total: number;
-  status: 'paid' | 'unpaid';
-  items: { description: string, amount: number }[];
+  receiptNo: string;
+  amount: number;
+  feeType: string;
+  feeForMonths?: string;
   createdAt: { toDate: () => Date };
 };
 
@@ -38,13 +39,22 @@ type Notice = {
   createdAt: { toDate: () => Date };
 }
 
+type Note = {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+  createdAt: { toDate: () => Date };
+}
+
 
 export default function DashboardPage() {
   const { t } = useLanguage();
   const { user } = useAuth();
   const [student, setStudent] = useState<Student | null>(null);
-  const [bills, setBills] = useState<Bill[]>([]);
+  const [bills, setBills] = useState<Receipt[]>([]); // Changed to Receipt
   const [notices, setNotices] = useState<Notice[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [firebaseConfigured, setFirebaseConfigured] = useState(true);
 
@@ -60,22 +70,32 @@ export default function DashboardPage() {
             const studentDocRef = doc(db, 'admissions', user.uid);
             const studentDocSnap = await getDoc(studentDocRef);
             if (studentDocSnap.exists()) {
-                setStudent({uid: studentDocSnap.id, ...studentDocSnap.data()} as Student);
+                const studentData = {uid: studentDocSnap.id, ...studentDocSnap.data()} as Student;
+                setStudent(studentData);
+
+                const billsQuery = query(
+                  collection(db, 'receipts'),
+                  where('studentId', '==', user.uid),
+                  orderBy('createdAt', 'desc')
+                );
+                const billsSnapshot = await getDocs(billsQuery);
+                const billsData = billsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Receipt[];
+                setBills(billsData);
+
+                const noticesQuery = query(collection(db, 'notices'), orderBy('createdAt', 'desc'));
+                const noticesSnapshot = await getDocs(noticesQuery);
+                const noticesData = noticesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Notice[];
+                setNotices(noticesData);
+
+                const notesQuery = query(
+                    collection(db, 'notes'),
+                    where('target', 'in', ['Public', studentData.courseAppliedFor]),
+                    orderBy('createdAt', 'desc')
+                );
+                const notesSnapshot = await getDocs(notesQuery);
+                const notesData = notesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Note[];
+                setNotes(notesData);
             }
-
-            const billsQuery = query(
-              collection(db, 'bills'),
-              where('studentId', '==', user.uid),
-              orderBy('createdAt', 'desc')
-            );
-            const billsSnapshot = await getDocs(billsQuery);
-            const billsData = billsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Bill[];
-            setBills(billsData);
-
-            const noticesQuery = query(collection(db, 'notices'), orderBy('createdAt', 'desc'));
-            const noticesSnapshot = await getDocs(noticesQuery);
-            const noticesData = noticesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Notice[];
-            setNotices(noticesData);
 
         } catch (error) {
             console.error("Error fetching dashboard data:", error);
@@ -133,7 +153,7 @@ export default function DashboardPage() {
             <h1 className="text-3xl md:text-4xl font-bold font-headline">{t('dashboard_page.welcome').replace('{name}', student.name)}</h1>
             <p className="text-muted-foreground mt-2">{t('dashboard_page.subtitle')}</p>
         </div>
-        <DashboardClient student={student} bills={bills} notices={notices} />
+        <DashboardClient student={student} bills={bills} notices={notices} notes={notes} />
     </div>
   );
 }

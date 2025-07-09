@@ -1,3 +1,5 @@
+
+
 'use client';
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
@@ -12,6 +14,9 @@ import { Loader2, Upload, Trash2, Image as ImageIcon, Video, Link as LinkIcon } 
 import Image from 'next/image';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { uploadFileWithProgress } from '@/lib/uploader';
+import { Progress } from '@/components/ui/progress';
+import { logActivity } from '@/lib/activity-logger';
 
 
 type GalleryItem = {
@@ -31,6 +36,7 @@ export default function GalleryAdminPage() {
     const [altText, setAltText] = useState('');
     const [title, setTitle] = useState('');
     const [uploading, setUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
     // State for URL upload
     const [url, setUrl] = useState('');
@@ -96,22 +102,46 @@ export default function GalleryAdminPage() {
         }
         
         setUploading(true);
-        const formData = new FormData();
-        formData.append('file', file);
+        setUploadProgress(0);
 
         try {
-            const uploadResponse = await fetch('/api/upload', {
-                method: 'POST',
-                body: formData,
+            const responseData = await uploadFileWithProgress('/api/upload', file, {
+              onProgress: setUploadProgress,
             });
 
-            const responseData = await uploadResponse.json();
-            if (!uploadResponse.ok) {
-                throw new Error(responseData.error || 'Failed to upload file.');
-            }
-
             const { secure_url, public_id } = responseData;
-            await saveToFirestore(secure_url, public_id, mediaType, altText, title);
+            
+            if (!db) {
+                throw new Error('Firebase not configured.');
+            }
+            
+            const newDocData: any = {
+                url: secure_url,
+                publicId: public_id,
+                type: mediaType,
+                createdAt: serverTimestamp(),
+            };
+    
+            if (mediaType === 'image') newDocData.alt = altText;
+            if (mediaType === 'video') newDocData.title = title;
+            
+            const docRef = await addDoc(collection(db, "gallery"), newDocData);
+            
+            await logActivity('gallery_upload', {
+                description: `New ${mediaType} uploaded to the gallery: "${mediaType === 'image' ? altText : title}".`,
+                payload: { url: secure_url }
+            });
+
+            const tempNewItem: GalleryItem = {
+                id: docRef.id,
+                url: secure_url,
+                publicId: public_id,
+                type: mediaType,
+                alt: mediaType === 'image' ? altText : undefined,
+                title: mediaType === 'video' ? title : undefined,
+                createdAt: { toDate: () => new Date() },
+            };
+            setGalleryItems(prev => [tempNewItem, ...prev]);
 
             toast({ title: 'Success!', description: 'Media uploaded successfully.' });
             setFile(null);
@@ -122,6 +152,7 @@ export default function GalleryAdminPage() {
             toast({ variant: 'destructive', title: 'Upload failed', description: error.message });
         } finally {
             setUploading(false);
+            setUploadProgress(null);
         }
     };
     
@@ -151,7 +182,38 @@ export default function GalleryAdminPage() {
                 throw new Error(responseData.error || 'Failed to upload from URL.');
             }
             const { secure_url, public_id } = responseData;
-            await saveToFirestore(secure_url, public_id, urlMediaType, urlAltText, urlTitle);
+            
+            if (!db) {
+                throw new Error('Firebase not configured.');
+            }
+
+            const newDocData: any = {
+                url: secure_url,
+                publicId: public_id,
+                type: urlMediaType,
+                createdAt: serverTimestamp(),
+            };
+
+            if (urlMediaType === 'image') newDocData.alt = urlAltText;
+            if (urlMediaType === 'video') newDocData.title = urlTitle;
+
+            const docRef = await addDoc(collection(db, "gallery"), newDocData);
+            
+            await logActivity('gallery_upload', {
+                description: `New ${urlMediaType} added to gallery from URL: "${urlMediaType === 'image' ? urlAltText : urlTitle}".`,
+                payload: { url: secure_url }
+            });
+
+            const tempNewItem: GalleryItem = {
+                id: docRef.id,
+                url: secure_url,
+                publicId: public_id,
+                type: urlMediaType,
+                alt: urlMediaType === 'image' ? urlAltText : undefined,
+                title: urlMediaType === 'video' ? urlTitle : undefined,
+                createdAt: { toDate: () => new Date() },
+            };
+            setGalleryItems(prev => [tempNewItem, ...prev]);
             
             toast({ title: 'Success!', description: 'Media added from URL successfully.' });
             setUrl('');
@@ -165,45 +227,38 @@ export default function GalleryAdminPage() {
         }
     };
 
-    const saveToFirestore = async (url: string, publicId: string, type: 'image' | 'video', alt: string, title: string) => {
-        if (!db) {
-            throw new Error('Firebase not configured.');
-        }
-        const newDocData: any = {
-            url,
-            publicId,
-            type,
-            createdAt: serverTimestamp(),
-        };
-
-        if (type === 'image') newDocData.alt = alt;
-        if (type === 'video') newDocData.title = title;
-        
-        const docRef = await addDoc(collection(db, "gallery"), newDocData);
-
-        const tempNewItem: GalleryItem = {
-            id: docRef.id,
-            url,
-            publicId,
-            type,
-            alt: type === 'image' ? alt : undefined,
-            title: type === 'video' ? title : undefined,
-            createdAt: { toDate: () => new Date() },
-        };
-        setGalleryItems(prev => [tempNewItem, ...prev]);
-    };
-
     const handleDelete = async (item: GalleryItem) => {
         if (!db) return;
+        if (!item.publicId) {
+            toast({ variant: 'destructive', title: 'Cannot Delete', description: 'This item does not have a public ID for Cloudinary deletion.' });
+            return;
+        }
+
+        const originalItems = [...galleryItems];
+        setGalleryItems(prev => prev.filter(i => i.id !== item.id));
+
         try {
+            const deleteResponse = await fetch('/api/delete-media', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ publicId: item.publicId, account: 'main' }) // Specify account
+            });
+
+            if (!deleteResponse.ok) {
+                const errorData = await deleteResponse.json();
+                throw new Error(errorData.error || 'Failed to delete from Cloudinary.');
+            }
+
             await deleteDoc(doc(db, 'gallery', item.id));
-            setGalleryItems(prev => prev.filter(i => i.id !== item.id));
-            toast({ title: 'Deleted', description: 'Media removed from gallery.' });
-        } catch (error) {
-            console.error(error);
-            toast({ variant: 'destructive', title: 'Deletion failed.' });
+            
+            toast({ title: 'Deleted Successfully', description: 'Media removed from gallery and Cloudinary.' });
+        } catch (error: any) {
+            console.error('Deletion failed:', error);
+            toast({ variant: 'destructive', title: 'Deletion Failed', description: error.message });
+            setGalleryItems(originalItems);
         }
     };
+
 
     return (
         <div className="grid gap-8 md:grid-cols-3">
@@ -213,14 +268,6 @@ export default function GalleryAdminPage() {
                     <CardDescription>Add new media by uploading a file or providing a URL.</CardDescription>
                 </CardHeader>
                  <CardContent>
-                    {!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME && (
-                        <Alert variant="destructive">
-                            <AlertTitle>Cloudinary Not Configured</AlertTitle>
-                            <AlertDescription>
-                                Please set up your Cloudinary environment variables to enable uploads.
-                            </AlertDescription>
-                        </Alert>
-                    )}
                      <Tabs defaultValue="file" className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
                             <TabsTrigger value="file">Upload File</TabsTrigger>
@@ -254,7 +301,13 @@ export default function GalleryAdminPage() {
                                         <Input id="video-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., JTI Campus Tour 2024" />
                                     </div>
                                 )}
-                                <Button type="submit" className="w-full" disabled={uploading || !process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}>
+                                {uploading && uploadProgress !== null && (
+                                    <div className="space-y-2">
+                                        <Progress value={uploadProgress} />
+                                        <p className="text-xs text-muted-foreground text-center">{uploadProgress}%</p>
+                                    </div>
+                                )}
+                                <Button type="submit" className="w-full" disabled={uploading}>
                                     {uploading ? <Loader2 className="animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                                     {uploading ? 'Uploading...' : 'Upload Media'}
                                 </Button>
@@ -288,7 +341,7 @@ export default function GalleryAdminPage() {
                                         <Input id="url-video-title" value={urlTitle} onChange={(e) => setUrlTitle(e.target.value)} placeholder="e.g., JTI Campus Tour 2024" />
                                     </div>
                                 )}
-                                <Button type="submit" className="w-full" disabled={isUploadingFromUrl || !process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}>
+                                <Button type="submit" className="w-full" disabled={isUploadingFromUrl}>
                                     {isUploadingFromUrl ? <Loader2 className="animate-spin" /> : <LinkIcon className="mr-2 h-4 w-4" />}
                                     {isUploadingFromUrl ? 'Adding...' : 'Add From URL'}
                                 </Button>
@@ -333,4 +386,3 @@ export default function GalleryAdminPage() {
             </Card>
         </div>
     );
-}

@@ -1,3 +1,5 @@
+
+
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -21,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Send } from "lucide-react"
 import { useLanguage } from "@/hooks/use-language"
+import { logActivity } from "@/lib/activity-logger"
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -68,6 +71,10 @@ export default function ContactForm() {
         ...values,
         createdAt: serverTimestamp(),
         isRead: false,
+      });
+
+      await logActivity('new_message', {
+        description: `New contact message from ${values.name} with subject "${values.subject}".`
       });
 
       toast({

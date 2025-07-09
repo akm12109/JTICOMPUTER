@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation"
 import { collection, serverTimestamp, doc, runTransaction } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import React, { useRef } from "react"
-import { format, isValid } from "date-fns"
+import { isValid } from "date-fns"
 import Image from 'next/image';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -26,15 +26,15 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
-import { CalendarIcon, UserPlus, Upload, PlusCircle, Trash2, FileBadge, Loader2 } from "lucide-react"
+import { UserPlus, Upload, PlusCircle, Trash2, FileBadge, Loader2 } from "lucide-react"
 import { useLanguage } from "@/hooks/use-language";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
-import { cn } from "@/lib/utils"
-import { Calendar } from "./ui/calendar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { courseKeys } from "@/lib/course-data"
 import { Textarea } from "./ui/textarea"
 import { ApplicationPreview } from "./application-preview";
+import { uploadDataUriWithProgress } from "@/lib/uploader";
+import { Progress } from "./ui/progress";
+import { logActivity } from "@/lib/activity-logger";
 
 const qualificationSchema = z.object({
   examination: z.string().min(1, "Examination is required."),
@@ -74,6 +74,9 @@ export default function RegisterForm() {
     const [loading, setLoading] = React.useState(false)
     const [photoPreview, setPhotoPreview] = React.useState<string | null>(null);
     const [signaturePreview, setSignaturePreview] = React.useState<string | null>(null);
+    
+    const [uploadProgress, setUploadProgress] = React.useState<number | null>(null);
+    const [uploadMessage, setUploadMessage] = React.useState<string>("");
 
     const [submittedData, setSubmittedData] = React.useState<ApplicationForPdf | null>(null);
     const previewRef = useRef<HTMLDivElement>(null);
@@ -158,7 +161,6 @@ export default function RegisterForm() {
         }
     }, [submittedData, generateAndOpenPdf]);
 
-
     async function onSubmit(values: FormValues) {
         setLoading(true);
         if (!db) {
@@ -168,6 +170,22 @@ export default function RegisterForm() {
         }
 
         try {
+            const dataToSubmit = { ...values };
+
+            if (dataToSubmit.photoDataUri && dataToSubmit.photoDataUri.startsWith('data:')) {
+                 setUploadMessage("Uploading photo...");
+                 const response = await uploadDataUriWithProgress('/api/upload-profile-media', dataToSubmit.photoDataUri, { onProgress: setUploadProgress });
+                 dataToSubmit.photoDataUri = response.secure_url;
+            }
+
+            if (dataToSubmit.signatureDataUri && dataToSubmit.signatureDataUri.startsWith('data:')) {
+                 setUploadMessage("Uploading signature...");
+                 const response = await uploadDataUriWithProgress('/api/upload-profile-media', dataToSubmit.signatureDataUri, { onProgress: setUploadProgress });
+                 dataToSubmit.signatureDataUri = response.secure_url;
+            }
+
+            setUploadMessage("Finalizing application...");
+
             const counterRef = doc(db, 'counters', 'admissionCounter');
 
             const newSlNo = await runTransaction(db, async (transaction) => {
@@ -177,9 +195,9 @@ export default function RegisterForm() {
 
                 const newApplicationRef = doc(collection(db, "applications"));
                 transaction.set(newApplicationRef, {
-                    ...values,
+                    ...dataToSubmit,
                     slNo: newSlNo,
-                    dob: new Date(values.dob),
+                    dob: new Date(dataToSubmit.dob),
                     createdAt: serverTimestamp(),
                     status: 'pending'
                 });
@@ -187,10 +205,14 @@ export default function RegisterForm() {
                 transaction.set(counterRef, { lastSlNo: newSlNo }, { merge: true });
                 return newSlNo;
             });
+            
+            await logActivity('new_application', {
+                description: `New application from ${dataToSubmit.name} for ${dataToSubmit.courseAppliedFor}.`
+            });
 
             toast({ title: t('admission_page.success_title'), description: t('admission_page.success_desc') });
             
-            const dataForPdf = { ...values, slNo: newSlNo, createdAt: { toDate: () => new Date() } };
+            const dataForPdf = { ...dataToSubmit, slNo: newSlNo, createdAt: { toDate: () => new Date() } };
             setSubmittedData(dataForPdf);
 
             form.reset();
@@ -199,9 +221,11 @@ export default function RegisterForm() {
 
         } catch (error: any) {
             console.error("Application submission error:", error);
-            toast({ variant: 'destructive', title: 'Application Failed', description: 'An error occurred. Please try again.' });
+            toast({ variant: 'destructive', title: 'Application Failed', description: error.message || 'An error occurred. Please try again.' });
         } finally {
             setLoading(false);
+            setUploadProgress(null);
+            setUploadMessage("");
         }
     }
 
@@ -217,14 +241,18 @@ export default function RegisterForm() {
                         <FormField control={form.control} name="fatherName" render={({ field }) => ( <FormItem><FormLabel>{t('admission_page.father_name_label')}</FormLabel><FormControl><Input placeholder={t('admission_page.father_name_placeholder')} {...field} /></FormControl><FormMessage /></FormItem>)} />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <FormField control={form.control} name="dob" render={({ field }) => (
-                            <FormItem className="flex flex-col"><FormLabel>{t('admission_page.dob_label')}</FormLabel>
-                            <Popover><PopoverTrigger asChild>
-                                <Button variant={"outline"} className={cn("justify-start text-left font-normal",!field.value && "text-muted-foreground")}>
-                                    <CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(new Date(field.value), "PPP") : <span>Pick a date</span>}
-                                </Button>
-                            </PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value ? new Date(field.value) : undefined} onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')} initialFocus /></PopoverContent></Popover><FormMessage />
-                            </FormItem>)}
+                        <FormField
+                            control={form.control}
+                            name="dob"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>{t('admission_page.dob_label')}</FormLabel>
+                                    <FormControl>
+                                        <Input type="date" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
                         />
                         <FormField control={form.control} name="sex" render={({ field }) => (
                             <FormItem><FormLabel>{t('admission_page.sex')}</FormLabel>
@@ -274,12 +302,15 @@ export default function RegisterForm() {
                                     ) : ( <Upload className="h-8 w-8 text-muted-foreground" /> )}
                                 </div>
                                 <FormField control={form.control} name="photoDataUri" render={({ field }) => (
-                                    <FormItem><FormControl>
-                                        <Button asChild variant="outline" type="button"><label>
-                                            <Upload className="mr-2 h-4 w-4" /> {t('admission_page.upload_photo')}
-                                            <Input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, setPhotoPreview, 'photoDataUri')} className="hidden" />
-                                        </label></Button>
-                                    </FormControl><FormMessage /></FormItem>
+                                    <FormItem>
+                                        <FormControl>
+                                            <Button asChild variant="outline" type="button"><label>
+                                                <Upload className="mr-2 h-4 w-4" /> {t('admission_page.upload_photo')}
+                                                <Input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, setPhotoPreview, 'photoDataUri')} className="hidden" />
+                                            </label></Button>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
                                 )} />
                             </div>
                         </div>
@@ -302,9 +333,16 @@ export default function RegisterForm() {
                             </div>
                         </div>
                     </div>
+                    
+                    {loading && uploadProgress !== null && (
+                      <div className="space-y-2">
+                          <Label>{uploadMessage}</Label>
+                          <Progress value={uploadProgress} />
+                      </div>
+                    )}
 
                     <Button type="submit" className="w-full" disabled={loading}>
-                        {loading ? <Loader2 className="animate-spin" /> : <UserPlus className="ml-2 h-4 w-4" />}
+                        {loading ? <Loader2 className="animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
                         {loading ? t('admission_page.submitting_button') : t('common.submit_application')}
                     </Button>
                 </form>

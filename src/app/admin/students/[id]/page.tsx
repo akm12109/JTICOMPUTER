@@ -457,27 +457,27 @@ export default function StudentDetailPage() {
                 <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-4">
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="slNo" className="text-right">Sl. No.</Label>
-                        <Input id="slNo" value={editableStudent.slNo} onChange={handleInputChange} className="col-span-3" />
+                        <Input id="slNo" value={editableStudent.slNo ?? ''} onChange={handleInputChange} className="col-span-3" />
                     </div>
                      <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="session" className="text-right">Session</Label>
-                        <Input id="session" value={editableStudent.session} onChange={handleInputChange} className="col-span-3" />
+                        <Input id="session" value={editableStudent.session ?? ''} onChange={handleInputChange} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="name" className="text-right">Name</Label>
-                        <Input id="name" value={editableStudent.name} onChange={handleInputChange} className="col-span-3" />
+                        <Input id="name" value={editableStudent.name ?? ''} onChange={handleInputChange} className="col-span-3" />
                     </div>
                      <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="fatherName" className="text-right">Father's Name</Label>
-                        <Input id="fatherName" value={editableStudent.fatherName} onChange={handleInputChange} className="col-span-3" />
+                        <Input id="fatherName" value={editableStudent.fatherName ?? ''} onChange={handleInputChange} className="col-span-3" />
                     </div>
                      <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="email" className="text-right">Email</Label>
-                        <Input id="email" value={editableStudent.email} readOnly className="col-span-3" />
+                        <Input id="email" value={editableStudent.email ?? ''} readOnly className="col-span-3" />
                     </div>
                      <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="phone" className="text-right">Phone</Label>
-                        <Input id="phone" value={editableStudent.phone} onChange={handleInputChange} className="col-span-3" />
+                        <Input id="phone" value={editableStudent.phone ?? ''} onChange={handleInputChange} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="dob" className="text-right">DOB</Label>
@@ -492,19 +492,19 @@ export default function StudentDetailPage() {
                     </div>
                      <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="sex" className="text-right">Sex</Label>
-                        <Input id="sex" value={editableStudent.sex} onChange={handleInputChange} className="col-span-3" />
+                        <Input id="sex" value={editableStudent.sex ?? ''} onChange={handleInputChange} className="col-span-3" />
                     </div>
                      <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="nationality" className="text-right">Nationality</Label>
-                        <Input id="nationality" value={editableStudent.nationality} onChange={handleInputChange} className="col-span-3" />
+                        <Input id="nationality" value={editableStudent.nationality ?? ''} onChange={handleInputChange} className="col-span-3" />
                     </div>
                      <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="address" className="text-right">Address</Label>
-                        <Input id="address" value={editableStudent.address} onChange={handleInputChange} className="col-span-3" />
+                        <Input id="address" value={editableStudent.address ?? ''} onChange={handleInputChange} className="col-span-3" />
                     </div>
                      <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="courseAppliedFor" className="text-right">Course</Label>
-                        <Input id="courseAppliedFor" value={editableStudent.courseAppliedFor} onChange={handleInputChange} className="col-span-3" />
+                        <Input id="courseAppliedFor" value={editableStudent.courseAppliedFor ?? ''} onChange={handleInputChange} className="col-span-3" />
                     </div>
                 </div>
                 <DialogFooter>

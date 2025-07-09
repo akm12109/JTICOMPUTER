@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,6 +32,7 @@ import { Textarea } from "./ui/textarea";
 import { Checkbox } from "./ui/checkbox";
 import { EnquiryPreview } from "./enquiry-preview";
 import { cn } from "@/lib/utils";
+import { logActivity } from "@/lib/activity-logger";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -177,6 +179,10 @@ export default function EnquiryForm() {
                 transaction.set(counterRef, { lastSlNo: newSlNo }, { merge: true });
 
                 return newSlNo;
+            });
+
+            await logActivity('new_enquiry', {
+              description: `New enquiry from ${values.name} for ${values.courseAppliedFor}.`
             });
             
             toast({ title: t('enquiry_form.success_title'), description: t('enquiry_form.success_desc') });

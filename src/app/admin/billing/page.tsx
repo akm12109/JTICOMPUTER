@@ -4,158 +4,152 @@
 import React, { useEffect, useState, useRef } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { collection, getDocs, query, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, query, addDoc, serverTimestamp, runTransaction, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useSearchParams } from 'next/navigation';
-import QRCode from 'qrcode';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Printer, Loader2, PlusCircle, Trash2, ChevronsUpDown, Save } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AlertTriangle, Printer, Loader2, Save, ChevronsUpDown } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import JtiLogo from '@/components/jti-logo';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 
 type Admission = {
   uid: string;
   name: string;
+  fatherName: string;
   email: string;
+  phone: string;
+  courseAppliedFor: string;
+  session?: string;
+  slNo?: string;
 };
 
-const lineItemSchema = z.object({
-  description: z.string().min(3, { message: 'Description must be at least 3 characters.' }),
-  amount: z.coerce.number().positive({ message: 'Amount must be a positive number.' }),
-});
-
-const billSchema = z.object({
+const receiptSchema = z.object({
   studentId: z.string().optional(),
-  studentName: z.string().min(2, { message: 'Student name is required.' }),
-  studentEmail: z.string().email({ message: "Invalid email" }).optional().or(z.literal('')),
-  items: z.array(lineItemSchema).min(1, { message: 'Please add at least one bill item.' }),
-  isPaid: z.boolean().default(false),
-  paymentMethod: z.enum(['cash', 'upi', 'card']).optional(),
-}).refine(data => {
-    if (data.isPaid && !data.paymentMethod) {
-        return false;
-    }
-    return true;
-}, {
-    message: "Payment method is required for paid bills.",
-    path: ["paymentMethod"],
+  studentName: z.string().min(2, { message: 'Name is required' }),
+  sonDaughterWifeOf: z.string().min(2, { message: "Father/Husband's name is required" }),
+  rollNo: z.string().optional(),
+  courseName: z.string().min(2, { message: 'Course is required' }),
+  contactNo: z.string().optional(),
+  session: z.string().min(4, { message: 'Session is required' }),
+  
+  feeType: z.enum(['Admission', 'Tution', 'Examination', 'Certification', 'Others']),
+  feeForMonths: z.string().optional(),
+  amount: z.coerce.number().positive({ message: 'Amount must be a positive number.' }),
+  amountInWords: z.string().min(3, { message: "Amount in words is required." }),
+  paymentMethod: z.enum(['Cash', 'DD', 'Cheque', 'UPI']),
 });
 
+type ReceiptFormValues = z.infer<typeof receiptSchema>;
 
-type BillFormValues = z.infer<typeof billSchema>;
-
-interface BillDetails extends BillFormValues {
+interface ReceiptDetails extends ReceiptFormValues {
   date: string;
-  billNumber: string;
-  total: number;
+  receiptNo: string;
 }
 
-const BillPreview = ({ bill }: { bill: BillDetails }) => {
-    const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
-
-    useEffect(() => {
-        if (bill) {
-            const billInfo = `Student: ${bill.studentName}\nEmail: ${bill.studentEmail || 'N/A'}\nBill #: ${bill.billNumber}\nTotal: ₹${bill.total.toFixed(2)}`;
-            QRCode.toDataURL(billInfo, {
-                errorCorrectionLevel: 'H',
-                margin: 2,
-                color: {
-                    dark: '#0077CC', // JTI Primary Blue
-                    light: '#FFFFFF'
-                }
-            })
-            .then(url => {
-                setQrCodeDataUrl(url);
-            })
-            .catch(err => {
-                console.error("QR Code generation failed:", err);
-            });
-        }
-    }, [bill]);
-
-    return (
-        <div className="p-8 border rounded-lg bg-white text-black font-sans">
-            <div className="flex justify-between items-center pb-4 mb-4 border-b-2 border-primary">
-                <div className="flex items-center gap-4">
-                    <JtiLogo size="medium" />
-                </div>
-                <h1 className="text-4xl font-extrabold text-gray-300 uppercase tracking-widest">Invoice</h1>
+const ReceiptPreview = ({ receipt }: { receipt: ReceiptDetails }) => (
+    <div className="p-4 bg-yellow-100 text-black font-serif border-2 border-black">
+        {/* Header */}
+        <div className="flex justify-between items-start mb-4">
+            <div className="flex-shrink-0">
+                <JtiLogo size="large" />
             </div>
-    
-            <div className="grid grid-cols-2 gap-4 mb-8">
-                <div>
-                    <h3 className="font-semibold mb-2 text-gray-500 text-sm uppercase">Bill To</h3>
-                    <p className="font-bold text-lg">{bill.studentName}</p>
-                    {bill.studentEmail && <p className="text-gray-700">{bill.studentEmail}</p>}
-                </div>
-                <div className="text-right">
-                    <p><span className="font-semibold text-gray-500">Invoice #: </span> {bill.billNumber}</p>
-                    <p><span className="font-semibold text-gray-500">Date: </span> {bill.date}</p>
-                    {bill.isPaid && bill.paymentMethod ? (
-                        <p><span className="font-semibold text-gray-500">Status: </span> <span className="font-bold text-green-600">PAID</span> via {bill.paymentMethod.toUpperCase()}</p>
-                    ) : (
-                        <p><span className="font-semibold text-gray-500">Status: </span> <span className="font-bold text-red-600">UNPAID</span></p>
-                    )}
-                </div>
-            </div>
-    
-            <Table>
-                <TableHeader className="bg-primary/10">
-                    <TableRow>
-                        <TableHead className="w-[70%] text-primary font-bold">Description</TableHead>
-                        <TableHead className="text-right text-primary font-bold">Amount</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {bill.items.map((item, index) => (
-                        <TableRow key={index} className="border-b-gray-100">
-                            <TableCell className="font-medium py-3">{item.description}</TableCell>
-                            <TableCell className="text-right font-medium">₹{item.amount.toFixed(2)}</TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-            <Separator className="my-1 bg-gray-200" />
-            
-            <div className="mt-8 flex justify-between items-end">
-                <div>
-                    {qrCodeDataUrl ? (
-                        <>
-                            <img src={qrCodeDataUrl} alt="Bill QR Code" className="w-28 h-28 border p-1" />
-                            <p className="text-xs text-gray-500 mt-1 text-center">Scan for details</p>
-                        </>
-                    ) : <div className="w-28 h-28 bg-gray-100 animate-pulse"></div>}
-                </div>
-                <div className="w-1/2">
-                    <div className="flex justify-between items-center bg-gray-100 p-4 rounded-lg">
-                        <span className="font-bold text-lg text-gray-700">Total</span>
-                        <span className="font-bold text-2xl text-primary">₹{bill.total.toFixed(2)}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div className="mt-10 pt-4 border-t text-center text-xs text-gray-500">
-                <p>Thank you for choosing Jharkhand Technical Institute!</p>
-                <p>This is a computer-generated invoice and does not require a signature.</p>
+            <div className="text-right text-xs flex-grow">
+                <p className="font-bold">Estd.:2001</p>
+                <p className="font-bold">Reg. No.-U72900JH2001PTC012042</p>
             </div>
         </div>
-    );
-};
+        <div className="text-center mb-4">
+            <h1 className="text-2xl font-bold tracking-wider">JTI COMPUTER EDUCATION</h1>
+            <p className="text-xs font-bold">EDUCATION & TRAINING DIVISION, JHARKHAND TECHNICAL INSTITUTE (P) LTD</p>
+            <p className="text-xs">H.O.- KUSHWAHA SADAN, PAKUR ROAD, GODDA</p>
+            <p className="text-xs">GAYTRI NAGAR, NAHAR CHOWK, GODDA</p>
+        </div>
+
+        {/* Body */}
+        <div className="relative border-y-2 border-dashed border-gray-400 py-2 my-2">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black text-white px-4 py-1 text-lg font-bold">RECEIPT</div>
+            <div className="flex justify-between text-sm">
+                <p>Receipt No.: <span className="font-semibold">{receipt.receiptNo}</span></p>
+                <p>Date: <span className="font-semibold">{receipt.date}</span></p>
+            </div>
+        </div>
+
+        <div className="mt-4 space-y-2 text-sm">
+            <div className="flex">
+                <span className="w-40 shrink-0">Mr/Ms/Mrs:</span>
+                <span className="border-b border-dotted border-black flex-grow font-semibold">{receipt.studentName}</span>
+            </div>
+            <div className="flex">
+                <span className="w-40 shrink-0">Son/Daughter/Wife of:</span>
+                <span className="border-b border-dotted border-black flex-grow font-semibold">{receipt.sonDaughterWifeOf}</span>
+            </div>
+            <div className="flex">
+                <div className="flex w-1/2 pr-2">
+                    <span className="w-24 shrink-0">Roll No.:</span>
+                    <span className="border-b border-dotted border-black flex-grow font-semibold">{receipt.rollNo}</span>
+                </div>
+                 <div className="flex w-1/2 pl-2">
+                    <span className="w-28 shrink-0">Course Name:</span>
+                    <span className="border-b border-dotted border-black flex-grow font-semibold">{receipt.courseName}</span>
+                </div>
+            </div>
+             <div className="flex">
+                <div className="flex w-1/2 pr-2">
+                    <span className="w-24 shrink-0">Contact No.:</span>
+                    <span className="border-b border-dotted border-black flex-grow font-semibold">{receipt.contactNo}</span>
+                </div>
+                 <div className="flex w-1/2 pl-2">
+                    <span className="w-28 shrink-0">Session:</span>
+                    <span className="border-b border-dotted border-black flex-grow font-semibold">{receipt.session}</span>
+                </div>
+            </div>
+             <p className="pt-2">
+                Paid the {receipt.feeType} Fee for the month of 
+                <span className="font-semibold px-2 inline-block border-b border-dotted border-black min-w-[100px] text-center">{receipt.feeForMonths}</span>
+                By {receipt.paymentMethod}.
+            </p>
+
+             <div className="flex pt-2">
+                <span className="w-40 shrink-0">Amount in Words:</span>
+                <span className="border-b border-dotted border-black flex-grow font-semibold">{receipt.amountInWords}</span>
+            </div>
+             <div className="flex items-center">
+                <div className="border border-black p-2 w-48 mt-2">
+                    Rs. <span className="font-bold text-lg ml-4">{receipt.amount.toFixed(2)}</span> Only
+                </div>
+            </div>
+        </div>
+
+        {/* Footer */}
+         <div className="flex justify-between mt-6 pt-2 text-xs">
+            <div>
+                <p className="mb-8">Student Signature</p>
+                 <div className="font-bold">Note:-</div>
+                <ol className="list-decimal list-inside">
+                    <li>Fee must be paid the first week of the Month.</li>
+                    <li>Fee once paid not refundable under any circumstance whatsoever.</li>
+                    <li>This receipt must be produced when demanded.</li>
+                </ol>
+            </div>
+            <div className="self-end">
+                <p className="mt-8 pt-4 border-t border-black">Received by</p>
+            </div>
+        </div>
+    </div>
+);
 
 
 export default function BillingPage() {
@@ -164,8 +158,8 @@ export default function BillingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
   const [firebaseConfigured, setFirebaseConfigured] = useState(true);
-  const [billData, setBillData] = useState<BillDetails | null>(null);
-  const [billToSave, setBillToSave] = useState<any | null>(null);
+  const [receiptData, setReceiptData] = useState<ReceiptDetails | null>(null);
+  const [receiptToSave, setReceiptToSave] = useState<any | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -175,16 +169,12 @@ export default function BillingPage() {
   const handlePrint = async () => {
     const element = componentToPrintRef.current;
     if (!element) {
-        toast({ variant: 'destructive', title: 'Could not find bill to print.' });
+        toast({ variant: 'destructive', title: 'Could not find receipt to print.' });
         return;
     }
     setIsPrinting(true);
     try {
-        const canvas = await html2canvas(element, {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: '#ffffff'
-        });
+        const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
         const imgData = canvas.toDataURL('image/png');
         
         const pdf = new jsPDF('p', 'mm', 'a4');
@@ -219,33 +209,36 @@ export default function BillingPage() {
     }
   };
 
-  const form = useForm<BillFormValues>({
-    resolver: zodResolver(billSchema),
+  const form = useForm<ReceiptFormValues>({
+    resolver: zodResolver(receiptSchema),
     defaultValues: {
-      studentId: '',
       studentName: '',
-      studentEmail: '',
-      items: [{ description: '', amount: 0 }],
-      isPaid: false,
-      paymentMethod: undefined,
+      sonDaughterWifeOf: '',
+      rollNo: '',
+      courseName: '',
+      contactNo: '',
+      session: '',
+      amountInWords: '',
+      paymentMethod: 'Cash',
+      feeType: 'Tution',
     },
-  });
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "items"
   });
 
   useEffect(() => {
     const studentId = searchParams.get('studentId');
-    const studentName = searchParams.get('studentName');
-    const studentEmail = searchParams.get('studentEmail');
-    if (studentId && studentName) {
-      form.setValue('studentId', studentId);
-      form.setValue('studentName', studentName);
-      form.setValue('studentEmail', studentEmail || '');
+    if (studentId) {
+      const student = admissions.find(s => s.uid === studentId);
+       if (student) {
+         form.setValue('studentId', student.uid);
+         form.setValue('studentName', student.name);
+         form.setValue('sonDaughterWifeOf', student.fatherName || '');
+         form.setValue('rollNo', student.slNo || '');
+         form.setValue('courseName', student.courseAppliedFor || '');
+         form.setValue('contactNo', student.phone || '');
+         form.setValue('session', student.session || '');
+       }
     }
-  }, [searchParams, form]);
+  }, [searchParams, form, admissions]);
 
   useEffect(() => {
     const fetchAdmissions = async () => {
@@ -257,7 +250,7 @@ export default function BillingPage() {
       try {
         const q = query(collection(db, 'admissions'));
         const querySnapshot = await getDocs(q);
-        const admissionsData = querySnapshot.docs.map(doc => doc.data() as Admission);
+        const admissionsData = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }) as Admission);
         setAdmissions(admissionsData);
       } catch (error) {
         console.error("Error fetching admissions: ", error);
@@ -268,55 +261,70 @@ export default function BillingPage() {
     fetchAdmissions();
   }, []);
   
-  const handleGeneratePreview = (values: BillFormValues) => {
-    const total = values.items.reduce((sum, item) => sum + item.amount, 0);
-    const billNumber = `JTI-${Date.now()}`;
+  const handleGeneratePreview = async (values: ReceiptFormValues) => {
+    const counterRef = doc(db, 'counters', 'receiptCounter');
     
-    // For Firestore
-    const dbDoc = {
-      billNumber,
-      studentId: values.studentId || '',
-      studentName: values.studentName,
-      studentEmail: values.studentEmail || '',
-      items: values.items,
-      total,
-      status: values.isPaid ? 'paid' : 'unpaid',
-      paymentMethod: values.isPaid ? values.paymentMethod : null,
-      createdAt: serverTimestamp(),
-    };
-    setBillToSave(dbDoc);
+    try {
+        const newReceiptNo = await runTransaction(db, async (transaction) => {
+            const counterDoc = await transaction.get(counterRef);
+            const lastReceiptNo = counterDoc.exists() ? counterDoc.data().lastNo : 1400; // Start from 1400 if not exists
+            return lastReceiptNo + 1;
+        });
 
-    // For Preview
-    setBillData({
-      ...values,
-      total,
-      date: new Date().toLocaleDateString('en-GB'),
-      billNumber,
-    });
+        // For Firestore
+        const dbDoc = {
+          receiptNo: newReceiptNo.toString(),
+          ...values,
+          createdAt: serverTimestamp(),
+        };
+        setReceiptToSave(dbDoc);
+
+        // For Preview
+        setReceiptData({
+          ...values,
+          receiptNo: newReceiptNo.toString(),
+          date: new Date().toLocaleDateString('en-GB'),
+        });
+
+    } catch (error) {
+       console.error("Error generating receipt number: ", error);
+       toast({ variant: 'destructive', title: "Failed to generate receipt number." });
+    }
   };
 
-  const handleSaveBill = async () => {
-    if (!billToSave || !db) {
-      toast({ variant: 'destructive', title: 'Could not save bill.' });
+  const handleSaveReceipt = async () => {
+    if (!receiptToSave || !db) {
+      toast({ variant: 'destructive', title: 'Could not save receipt.' });
       return;
     }
     setIsSubmitting(true);
     try {
-      await addDoc(collection(db, "bills"), billToSave);
-      toast({ title: "Bill saved successfully!", description: "The bill has been saved to the database." });
-      form.reset({
-        studentId: '',
-        studentName: '',
-        studentEmail: '',
-        items: [{ description: '', amount: 0 }],
-        isPaid: false,
-        paymentMethod: undefined,
+      const counterRef = doc(db, 'counters', 'receiptCounter');
+      
+      await runTransaction(db, async (transaction) => {
+          transaction.set(doc(collection(db, "receipts")), receiptToSave);
+          transaction.set(counterRef, { lastNo: parseInt(receiptToSave.receiptNo) }, { merge: true });
       });
-      setBillData(null);
-      setBillToSave(null);
+
+      toast({ title: "Receipt saved successfully!", description: "The receipt has been saved to the database." });
+      form.reset({
+          studentName: '',
+          sonDaughterWifeOf: '',
+          rollNo: '',
+          courseName: '',
+          contactNo: '',
+          session: '',
+          amount: 0,
+          amountInWords: '',
+          paymentMethod: 'Cash',
+          feeType: 'Tution',
+          feeForMonths: '',
+      });
+      setReceiptData(null);
+      setReceiptToSave(null);
     } catch(e) {
-      console.error("Error saving bill: ", e);
-      toast({ variant: 'destructive', title: "Failed to save bill.", description: "Please try again." });
+      console.error("Error saving receipt: ", e);
+      toast({ variant: 'destructive', title: "Failed to save receipt.", description: "Please try again." });
     } finally {
       setIsSubmitting(false);
     }
@@ -335,7 +343,6 @@ export default function BillingPage() {
   }
 
   const studentNameValue = form.watch("studentName");
-  const isPaidValue = form.watch("isPaid");
 
   const filteredAdmissions = studentNameValue
     ? admissions.filter((s) =>
@@ -347,180 +354,88 @@ export default function BillingPage() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
       <Card>
         <CardHeader>
-          <CardTitle>Advanced Bill Generator</CardTitle>
-          <CardDescription>Create, preview, and save itemized bills for students.</CardDescription>
+          <CardTitle>Receipt Generator</CardTitle>
+          <CardDescription>Create receipts that match the physical copy.</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
-             <div className="space-y-4">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-24 w-full" />
-                <Skeleton className="h-10 w-full" />
-             </div>
+             <div className="space-y-4"> <Skeleton className="h-10 w-full" /> <Skeleton className="h-10 w-full" /> <Skeleton className="h-24 w-full" /> <Skeleton className="h-10 w-full" /> </div>
           ) : (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleGeneratePreview)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="studentName"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Student</FormLabel>
-                      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              className={cn(
-                                "w-full justify-between font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value || "Select or enter a student name"}
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                           <Input
-                              placeholder="Enter or search for a student..."
-                              value={field.value}
-                              onChange={(e) => {
-                                field.onChange(e.target.value);
-                                form.setValue('studentId', undefined);
-                                form.setValue('studentEmail', '');
-                              }}
-                              className="m-2 w-[calc(100%-1rem)]"
-                            />
-                            <div className="max-h-60 overflow-y-auto">
-                              {filteredAdmissions.length > 0 ? (
-                                filteredAdmissions.map((admission) => (
-                                <div
-                                    key={admission.uid}
-                                    onClick={() => {
-                                      form.setValue("studentId", admission.uid);
-                                      form.setValue("studentName", admission.name);
-                                      form.setValue("studentEmail", admission.email);
-                                      setPopoverOpen(false);
-                                    }}
-                                    className="text-sm p-2 hover:bg-accent cursor-pointer"
-                                  >
-                                    {admission.name} ({admission.email})
-                                  </div>
-                                ))
-                              ) : (
-                                <p className="p-2 text-center text-sm text-muted-foreground">No students found.</p>
-                              )}
-                            </div>
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                 
-                <FormField
-                  control={form.control}
-                  name="studentEmail"
-                  render={({ field }) => (
-                  <FormItem>
-                      <FormLabel>Student Email (optional)</FormLabel>
+                <FormItem className="flex flex-col">
+                  <FormLabel>Student</FormLabel>
+                  <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                    <PopoverTrigger asChild>
                       <FormControl>
-                      <Input placeholder="Auto-filled if student is selected from list" {...field} disabled={!!form.watch('studentId')} />
+                        <Button variant="outline" role="combobox" className={cn("w-full justify-between font-normal", !form.watch('studentName') && "text-muted-foreground")}>
+                          {form.watch('studentName') || "Select or enter a student name"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
                       </FormControl>
-                      <FormMessage />
-                  </FormItem>
-                  )}
-                />
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                       <Input
+                          placeholder="Search for a student..."
+                          value={form.watch("studentName")}
+                          onChange={(e) => {
+                            form.setValue('studentName', e.target.value);
+                            form.setValue('studentId', undefined);
+                          }}
+                          className="m-2 w-[calc(100%-1rem)]"
+                        />
+                        <div className="max-h-60 overflow-y-auto">
+                          {filteredAdmissions.length > 0 ? (
+                            filteredAdmissions.map((admission) => (
+                            <div key={admission.uid} onClick={() => {
+                                form.setValue("studentId", admission.uid);
+                                form.setValue("studentName", admission.name);
+                                form.setValue("sonDaughterWifeOf", admission.fatherName || '');
+                                form.setValue("rollNo", admission.slNo || '');
+                                form.setValue("courseName", admission.courseAppliedFor || '');
+                                form.setValue("contactNo", admission.phone || '');
+                                form.setValue("session", admission.session || '');
+                                setPopoverOpen(false);
+                            }} className="text-sm p-2 hover:bg-accent cursor-pointer">
+                                {admission.name} ({admission.email})
+                              </div>
+                            ))
+                          ) : (
+                            <p className="p-2 text-center text-sm text-muted-foreground">No students found.</p>
+                          )}
+                        </div>
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+
+                <FormField control={form.control} name="sonDaughterWifeOf" render={({ field }) => ( <FormItem><FormLabel>Son/Daughter/Wife of</FormLabel><FormControl><Input placeholder="Father's Name" {...field} /></FormControl><FormMessage /></FormItem> )} />
                 
-                <div>
-                    <FormLabel>Bill Items</FormLabel>
-                    <div className="space-y-2 mt-2">
-                        {fields.map((item, index) => (
-                           <div key={item.id} className="flex gap-2 items-start">
-                             <FormField
-                                control={form.control}
-                                name={`items.${index}.description`}
-                                render={({ field }) => (
-                                    <FormItem className="flex-grow">
-                                    <FormControl>
-                                        <Input placeholder="Item Description (e.g. Tuition Fee)" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={form.control}
-                                name={`items.${index}.amount`}
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormControl>
-                                        <Input type="number" placeholder="Amount" {...field} className="w-32" />
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                              />
-                              <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={fields.length <= 1}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                           </div>
-                        ))}
-                    </div>
-                    <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => append({ description: '', amount: 0 })}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Item
-                    </Button>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField control={form.control} name="rollNo" render={({ field }) => ( <FormItem><FormLabel>Roll No.</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                  <FormField control={form.control} name="contactNo" render={({ field }) => ( <FormItem><FormLabel>Contact No.</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                  <FormField control={form.control} name="courseName" render={({ field }) => ( <FormItem><FormLabel>Course Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                  <FormField control={form.control} name="session" render={({ field }) => ( <FormItem><FormLabel>Session</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                </div>
+                
+                <Separator />
+                
+                <FormField control={form.control} name="feeType" render={({ field }) => (
+                  <FormItem> <FormLabel>Fee Type</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a fee type" /> </SelectTrigger> </FormControl> <SelectContent> <SelectItem value="Admission">Admission</SelectItem> <SelectItem value="Tution">Tution</SelectItem> <SelectItem value="Examination">Examination</SelectItem> <SelectItem value="Certification">Certification</SelectItem> <SelectItem value="Others">Others</SelectItem> </SelectContent> </Select> <FormMessage /> </FormItem>
+                )} />
+
+                <FormField control={form.control} name="feeForMonths" render={({ field }) => ( <FormItem><FormLabel>For Month(s)</FormLabel><FormControl><Input placeholder="e.g., June or June-July" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                
+                <div className="grid grid-cols-2 gap-4">
+                   <FormField control={form.control} name="amount" render={({ field }) => ( <FormItem><FormLabel>Amount (Rs.)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                   <FormField control={form.control} name="paymentMethod" render={({ field }) => (
+                      <FormItem> <FormLabel>Payment Method</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a method" /> </SelectTrigger> </FormControl> <SelectContent> <SelectItem value="Cash">Cash</SelectItem> <SelectItem value="DD">DD</SelectItem> <SelectItem value="Cheque">Cheque</SelectItem> <SelectItem value="UPI">UPI</SelectItem> </SelectContent> </Select> <FormMessage /> </FormItem>
+                   )} />
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="isPaid"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                      <div className="space-y-0.5">
-                        <FormLabel>Mark as Paid</FormLabel>
-                        <FormDescription>
-                          Check this if the student has already paid this bill.
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                 <FormField control={form.control} name="amountInWords" render={({ field }) => ( <FormItem><FormLabel>Amount in Words</FormLabel><FormControl><Input placeholder="e.g., Five Hundred" {...field} /></FormControl><FormMessage /></FormItem> )} />
 
-                {isPaidValue && (
-                  <FormField
-                    control={form.control}
-                    name="paymentMethod"
-                    render={({ field }) => (
-                      <FormItem className="space-y-3">
-                        <FormLabel>Payment Method</FormLabel>
-                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                                <SelectTrigger>
-                                <SelectValue placeholder="Select a payment method" />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                <SelectItem value="cash">Cash</SelectItem>
-                                <SelectItem value="upi">UPI</SelectItem>
-                                <SelectItem value="card">Card</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
 
                 <Button type="submit" className="w-full">
                   Generate Preview
@@ -535,10 +450,10 @@ export default function BillingPage() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle>Bill Preview</CardTitle>
-              <CardDescription>Review the bill before saving or printing.</CardDescription>
+              <CardTitle>Receipt Preview</CardTitle>
+              <CardDescription>Review the receipt before saving or printing.</CardDescription>
             </div>
-            {billData && (
+            {receiptData && (
               <Button onClick={handlePrint} variant="secondary" disabled={isPrinting}>
                 {isPrinting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
                 {isPrinting ? 'Generating PDF...' : 'Print / Download'}
@@ -547,18 +462,18 @@ export default function BillingPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {billData ? (
+          {receiptData ? (
             <>
               <div ref={componentToPrintRef}>
-                <BillPreview bill={billData} />
+                <ReceiptPreview receipt={receiptData} />
               </div>
-              <Button onClick={handleSaveBill} disabled={isSubmitting || isPrinting} className="w-full mt-4">
-                  {isSubmitting ? <Loader2 className="animate-spin" /> : <><Save className="mr-2 h-4 w-4"/> Save Bill</>}
+              <Button onClick={handleSaveReceipt} disabled={isSubmitting || isPrinting} className="w-full mt-4">
+                  {isSubmitting ? <Loader2 className="animate-spin" /> : <><Save className="mr-2 h-4 w-4"/> Save Receipt</>}
               </Button>
             </>
           ) : (
             <div className="flex items-center justify-center h-96 border-2 border-dashed rounded-lg">
-              <p className="text-muted-foreground">Fill out the form to see a bill preview</p>
+              <p className="text-muted-foreground">Fill out the form to see a receipt preview</p>
             </div>
           )}
         </CardContent>

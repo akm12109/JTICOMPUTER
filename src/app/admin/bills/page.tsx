@@ -1,26 +1,16 @@
+
 'use client';
 import { useEffect, useState } from 'react';
-import { collection, getDocs, orderBy, query, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Trash2, Send, CheckCircle, Search } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { AlertTriangle, Trash2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogClose,
-} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,98 +21,75 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 
-type Bill = {
+type Receipt = {
   id: string;
-  billNumber: string;
+  receiptNo: string;
   studentName: string;
-  total: number;
-  status: 'paid' | 'unpaid';
-  paymentMethod?: 'cash' | 'upi' | 'card';
+  courseName: string;
+  amount: number;
   createdAt: { toDate: () => Date };
 };
 
-export default function BillsPage() {
-  const [bills, setBills] = useState<Bill[]>([]);
-  const [filteredBills, setFilteredBills] = useState<Bill[]>([]);
+export default function ReceiptsPage() {
+  const [receipts, setReceipts] = useState<Receipt[]>([]);
+  const [filteredReceipts, setFilteredReceipts] = useState<Receipt[]>([]);
   const [loading, setLoading] = useState(true);
   const [firebaseConfigured, setFirebaseConfigured] = useState(true);
   const { toast } = useToast();
 
-  const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
-  const [isPaidDialogOpen, setPaidDialogOpen] = useState(false);
+  const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'upi' | 'card'>('cash');
   const [isUpdating, setIsUpdating] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    const fetchBills = async () => {
+    const fetchReceipts = async () => {
       if (!db) {
         setFirebaseConfigured(false);
         setLoading(false);
         return;
       }
       try {
-        const q = query(collection(db, 'bills'), orderBy('createdAt', 'desc'));
+        const q = query(collection(db, 'receipts'), orderBy('createdAt', 'desc'));
         const querySnapshot = await getDocs(q);
-        const billsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Bill[];
-        setBills(billsData);
-        setFilteredBills(billsData);
+        const receiptsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Receipt[];
+        setReceipts(receiptsData);
+        setFilteredReceipts(receiptsData);
       } catch (error) {
-        console.error("Error fetching bills: ", error);
+        console.error("Error fetching receipts: ", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchBills();
+    fetchReceipts();
   }, []);
   
   useEffect(() => {
-    const results = bills.filter(bill =>
-      bill.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      bill.billNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    const results = receipts.filter(receipt =>
+      receipt.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      receipt.receiptNo.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    setFilteredBills(results);
-  }, [searchTerm, bills]);
+    setFilteredReceipts(results);
+  }, [searchTerm, receipts]);
 
-  const handleMarkAsPaid = async () => {
-    if (!selectedBill || !db) return;
+
+  const handleDeleteReceipt = async () => {
+    if (!selectedReceipt || !db) return;
     setIsUpdating(true);
     try {
-      const billRef = doc(db, 'bills', selectedBill.id);
-      await updateDoc(billRef, { status: 'paid', paymentMethod: paymentMethod });
-      
-      setBills(bills.map(b => b.id === selectedBill.id ? { ...b, status: 'paid', paymentMethod: paymentMethod } : b));
-      toast({ title: "Success", description: "Bill has been marked as paid." });
+      const receiptRef = doc(db, 'receipts', selectedReceipt.id);
+      await deleteDoc(receiptRef);
+      setReceipts(receipts.filter(b => b.id !== selectedReceipt.id));
+      toast({ title: "Success", description: "Receipt has been deleted." });
     } catch (error) {
-      toast({ variant: 'destructive', title: "Error", description: "Failed to update bill." });
-      console.error(error);
-    } finally {
-      setIsUpdating(false);
-      setPaidDialogOpen(false);
-      setSelectedBill(null);
-    }
-  }
-
-  const handleDeleteBill = async () => {
-    if (!selectedBill || !db) return;
-    setIsUpdating(true);
-    try {
-      const billRef = doc(db, 'bills', selectedBill.id);
-      await deleteDoc(billRef);
-      setBills(bills.filter(b => b.id !== selectedBill.id));
-      toast({ title: "Success", description: "Bill has been deleted." });
-    } catch (error) {
-      toast({ variant: 'destructive', title: "Error", description: "Failed to delete bill." });
+      toast({ variant: 'destructive', title: "Error", description: "Failed to delete receipt." });
       console.error(error);
     } finally {
       setIsUpdating(false);
       setDeleteDialogOpen(false);
-      setSelectedBill(null);
+      setSelectedReceipt(null);
     }
   }
 
@@ -138,154 +105,82 @@ export default function BillsPage() {
     )
   }
 
-  const unpaidBills = filteredBills.filter(b => b.status === 'unpaid');
-  const paidBills = filteredBills.filter(b => b.status === 'paid');
-
-  const renderBillsTable = (billsToShow: Bill[], isUnpaid: boolean) => (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Date</TableHead>
-          <TableHead>Bill #</TableHead>
-          <TableHead>Student Name</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Payment Method</TableHead>
-          <TableHead className="text-right">Amount</TableHead>
-          {isUnpaid && <TableHead className="text-right">Actions</TableHead>}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {billsToShow.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={isUnpaid ? 7 : 6} className="text-center h-24">
-                {searchTerm ? 'No matching bills found.' : 'No bills in this category.'}
-            </TableCell>
-          </TableRow>
-        ) : (
-          billsToShow.map(bill => (
-            <TableRow key={bill.id}>
-              <TableCell>{format(bill.createdAt.toDate(), 'PPP')}</TableCell>
-              <TableCell className="font-mono">{bill.billNumber}</TableCell>
-              <TableCell className="font-medium">{bill.studentName}</TableCell>
-              <TableCell>
-                <Badge variant={bill.status === 'paid' ? 'default' : 'destructive'} className={bill.status === 'paid' ? 'bg-green-600' : ''}>
-                  {bill.status}
-                </Badge>
-              </TableCell>
-              <TableCell>{bill.paymentMethod ? bill.paymentMethod.toUpperCase() : 'N/A'}</TableCell>
-              <TableCell className="text-right font-medium">₹{bill.total.toFixed(2)}</TableCell>
-              {isUnpaid && (
-                <TableCell className="text-right">
-                    <div className="flex gap-1 justify-end">
-                       <Button size="sm" variant="outline" onClick={() => { setSelectedBill(bill); setPaidDialogOpen(true); }}>
-                           <CheckCircle className="h-4 w-4" />
-                       </Button>
-                       <Button size="sm" variant="ghost" onClick={() => toast({title: "Coming Soon!", description: "This feature will be available with Razorpay integration."})}>
-                           <Send className="h-4 w-4" />
-                       </Button>
-                       <Button size="sm" variant="destructive" onClick={() => { setSelectedBill(bill); setDeleteDialogOpen(true); }}>
-                           <Trash2 className="h-4 w-4" />
-                       </Button>
-                    </div>
-                </TableCell>
-              )}
-            </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
-  );
-
   return (
     <>
       <Card>
         <CardHeader>
-          <CardTitle>All Bills</CardTitle>
-          <CardDescription>View all paid and unpaid bills.</CardDescription>
+          <CardTitle>All Receipts</CardTitle>
+          <CardDescription>View all generated receipts.</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+              placeholder="Search by student name or receipt number..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+              />
+          </div>
           {loading ? (
             <div className="space-y-4">
-              <Skeleton className="h-10 w-48" />
-              <Skeleton className="h-48 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
             </div>
           ) : (
-            <>
-                <div className="relative mb-4">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                    placeholder="Search by student name or bill number..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                    />
-                </div>
-                <Tabs defaultValue="unpaid">
-                <TabsList>
-                    <TabsTrigger value="unpaid">Unpaid Bills ({unpaidBills.length})</TabsTrigger>
-                    <TabsTrigger value="paid">Paid Bills ({paidBills.length})</TabsTrigger>
-                </TabsList>
-                <TabsContent value="unpaid">
-                    {renderBillsTable(unpaidBills, true)}
-                </TabsContent>
-                <TabsContent value="paid">
-                    {renderBillsTable(paidBills, false)}
-                </TabsContent>
-                </Tabs>
-            </>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Receipt #</TableHead>
+                  <TableHead>Student Name</TableHead>
+                  <TableHead>Course</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredReceipts.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center h-24">
+                        {searchTerm ? 'No matching receipts found.' : 'No receipts generated yet.'}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredReceipts.map(receipt => (
+                    <TableRow key={receipt.id}>
+                      <TableCell>{format(receipt.createdAt.toDate(), 'PPP')}</TableCell>
+                      <TableCell className="font-mono">{receipt.receiptNo}</TableCell>
+                      <TableCell className="font-medium">{receipt.studentName}</TableCell>
+                      <TableCell>{receipt.courseName}</TableCell>
+                      <TableCell className="text-right font-medium">₹{receipt.amount.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">
+                        <Button size="icon" variant="destructive" onClick={() => { setSelectedReceipt(receipt); setDeleteDialogOpen(true); }}>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
-
-      {/* Mark as Paid Dialog */}
-      <Dialog open={isPaidDialogOpen} onOpenChange={setPaidDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Mark Bill as Paid</DialogTitle>
-            <DialogDescription>
-              Select the payment method used for bill #{selectedBill?.billNumber}.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <RadioGroup defaultValue="cash" onValueChange={(value: 'cash' | 'upi' | 'card') => setPaymentMethod(value)}>
-                <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="cash" id="r1" />
-                    <Label htmlFor="r1">Cash</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="upi" id="r2" />
-                    <Label htmlFor="r2">UPI</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="card" id="r3" />
-                    <Label htmlFor="r3">Card</Label>
-                </div>
-            </RadioGroup>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="secondary">Cancel</Button>
-            </DialogClose>
-            <Button onClick={handleMarkAsPaid} disabled={isUpdating}>
-              Confirm Payment
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
       
-      {/* Delete Bill Alert Dialog */}
+      {/* Delete Receipt Alert Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the bill
-              for #{selectedBill?.billNumber} from the database.
+              This action cannot be undone. This will permanently delete receipt #{selectedReceipt?.receiptNo} from the database.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteBill} disabled={isUpdating} className="bg-destructive hover:bg-destructive/90">
+            <AlertDialogAction onClick={handleDeleteReceipt} disabled={isUpdating} className="bg-destructive hover:bg-destructive/90">
                 Continue
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -294,3 +189,4 @@ export default function BillsPage() {
     </>
   );
 }
+

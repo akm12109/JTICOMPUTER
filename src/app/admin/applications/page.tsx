@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useEffect, useState, useRef } from 'react';
 import { collection, getDocs, orderBy, query, where, deleteDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -26,6 +27,7 @@ import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { ApplicationPreview } from '@/components/application-preview';
+import { logActivity } from '@/lib/activity-logger';
 
 type Application = {
   id: string;
@@ -137,12 +139,8 @@ export default function ApplicationsPage() {
 
     setIsAdmitting(true);
     let tempApp;
-    const tempAppName = 'studentCreation';
+    const tempAppName = `studentCreation_${Date.now()}`;
     try {
-        if (getApps().some(app => app.name === tempAppName)) {
-            tempApp = getApp(tempAppName);
-            await deleteApp(tempApp);
-        }
         tempApp = initializeApp(firebaseConfig, tempAppName);
 
         const tempAuth = getAuth(tempApp);
@@ -158,22 +156,27 @@ export default function ApplicationsPage() {
             admissionDate: serverTimestamp()
         });
         await deleteDoc(doc(db, "applications", selectedApp.id));
+        
+        await logActivity('student_admitted', {
+          description: `${selectedApp.name} was admitted to ${selectedApp.courseAppliedFor}.`,
+          link: `/admin/students/${user.uid}`
+        });
 
-        const mailtoLink = `mailto:${selectedApp.email}?subject=Admission Approved at JTI Godda&body=
-Dear ${selectedApp.name},%0D%0A%0D%0A
-Congratulations! Your application for the ${selectedApp.courseAppliedFor} course has been approved.%0D%0A%0D%0A
-You can now log in to your student dashboard using the following credentials:%0D%0A
-Email: ${selectedApp.email}%0D%0A
-Temporary Password: ${tempPassword}%0D%0A%0D%0A
-Please log in and change your password as soon as possible.%0D%0A
-Login here: ${window.location.origin}/login %0D%0A%0D%0A
-Welcome to Jharkhand Technical Institute!%0D%0A%0D%0A
-Best regards,%0D%0A
-JTI Godda Admission Team
-`;
-        window.location.href = mailtoLink;
+        const subject = `Admission Approved at JTI Godda`;
+        const body = `Dear ${selectedApp.name},\n\nCongratulations! Your application for the ${selectedApp.courseAppliedFor} course has been approved.\n\nYou can now log in to your student dashboard using the following credentials:\nEmail: ${selectedApp.email}\nTemporary Password: ${tempPassword}\n\nPlease log in and change your password as soon as possible.\nLogin here: ${window.location.origin}/login\n\nWelcome to Jharkhand Technical Institute!\n\nBest regards,\nJTI Godda Admission Team`;
+        
+        const isDesktop = typeof window !== 'undefined' && !/Mobi|Android/i.test(navigator.userAgent);
+        
+        if (isDesktop) {
+            const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(selectedApp.email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.open(gmailUrl, '_blank', 'noopener,noreferrer');
+        } else {
+            const mailtoLink = `mailto:${selectedApp.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailtoLink;
+        }
 
         setApplications(prev => prev.filter(app => app.id !== selectedApp.id));
+        setFilteredApplications(prev => prev.filter(app => app.id !== selectedApp.id));
         toast({ title: "Student Admitted!", description: `${selectedApp.name} has been admitted and their account is created.` });
     } catch (error: any) {
       console.error("Error admitting student:", error);
@@ -275,7 +278,7 @@ JTI Godda Admission Team
           <div className="grid gap-4 py-4">
              <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="email" className="text-right">Email</Label>
-                <Input id="email" value={selectedApp?.email} readOnly className="col-span-3" />
+                <Input id="email" value={selectedApp?.email ?? ''} readOnly className="col-span-3" />
             </div>
              <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="password"  className="text-right">Temp. Password</Label>

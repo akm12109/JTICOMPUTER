@@ -1,3 +1,5 @@
+
+
 'use client';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, orderBy, query, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
@@ -17,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { logActivity } from '@/lib/activity-logger';
 
 type Notice = {
   id: string;
@@ -73,6 +76,11 @@ export default function NoticesPage() {
         ...values,
         createdAt: serverTimestamp(),
       });
+      
+      await logActivity('notice_published', {
+        description: `New notice published: "${values.title}".`
+      });
+
       // Add new notice to the top of the list for immediate UI update
       setNotices(prev => [{ ...values, id: docRef.id, createdAt: { toDate: () => new Date() } }, ...prev]);
       toast({ title: 'Notice Published!', description: 'The notice is now visible to students.' });

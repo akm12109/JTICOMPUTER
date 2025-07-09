@@ -28,6 +28,8 @@ import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Label } from "./ui/label";
 import { Checkbox } from "./ui/checkbox";
 import { Textarea } from "./ui/textarea";
+import { uploadDataUriWithProgress } from "@/lib/uploader";
+import { Progress } from "./ui/progress";
 
 // Schemas
 const academicDetailsSchema = z.object({
@@ -117,6 +119,7 @@ export default function CareerForm({ studentProfile }: CareerFormProps) {
   const { t } = useLanguage();
   const router = useRouter();
   const [loading, setLoading] = React.useState(false);
+  const [uploadProgress, setUploadProgress] = React.useState<number | null>(null);
   const [photoPreview, setPhotoPreview] = React.useState<string | null>(studentProfile.photoDataUri || null);
 
   const form = useForm<CareerFormValues>({
@@ -180,9 +183,20 @@ export default function CareerForm({ studentProfile }: CareerFormProps) {
       return;
     }
     try {
+      const dataToUpdate = { ...values };
+
+      // Check if photo is a new upload (data URI)
+      if (dataToUpdate.photoDataUri && dataToUpdate.photoDataUri.startsWith('data:')) {
+        setUploadProgress(0);
+        const response = await uploadDataUriWithProgress('/api/upload-profile-media', dataToUpdate.photoDataUri, {
+          onProgress: setUploadProgress
+        });
+        dataToUpdate.photoDataUri = response.secure_url;
+      }
+      
       const profileRef = doc(db, 'admissions', studentProfile.uid);
       await setDoc(profileRef, {
-        ...values,
+        ...dataToUpdate,
         updatedAt: serverTimestamp(),
       }, { merge: true });
 
@@ -196,6 +210,7 @@ export default function CareerForm({ studentProfile }: CareerFormProps) {
       console.error(error);
     } finally {
       setLoading(false);
+      setUploadProgress(null);
     }
   }
   
@@ -450,6 +465,13 @@ export default function CareerForm({ studentProfile }: CareerFormProps) {
             </CardContent>
         </Card>
         
+        {loading && uploadProgress !== null && (
+          <div className="space-y-2">
+              <Label>Uploading photo...</Label>
+              <Progress value={uploadProgress} />
+          </div>
+        )}
+
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? <Loader2 className="animate-spin" /> : <><Save className="mr-2" /> {t('careers_form.submit_button')}</>}
         </Button>

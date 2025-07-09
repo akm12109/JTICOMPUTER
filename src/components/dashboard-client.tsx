@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -16,11 +17,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/use-language";
-import { User, Mail, Phone, Home, Calendar, BookOpen, GraduationCap, Megaphone, ArrowRight, Briefcase } from 'lucide-react';
+import { User, Mail, Phone, Home, Calendar, BookOpen, GraduationCap, Megaphone, ArrowRight, Briefcase, Download, File as FileIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
@@ -39,11 +38,12 @@ type Student = {
   createdAt: { toDate: () => Date };
 };
 
-type Bill = {
+type Receipt = {
   id: string;
-  billNumber: string;
-  total: number;
-  status: 'paid' | 'unpaid';
+  receiptNo: string;
+  amount: number;
+  feeType: string;
+  feeForMonths?: string;
   createdAt: { toDate: () => Date };
 };
 
@@ -54,10 +54,19 @@ type Notice = {
   createdAt: { toDate: () => Date };
 }
 
+type Note = {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+  createdAt: { toDate: () => Date };
+}
+
 type DashboardClientProps = {
     student: Student;
-    bills: Bill[];
+    bills: Receipt[];
     notices: Notice[];
+    notes: Note[];
 }
 
 const DetailRow = ({ icon: Icon, label, value }: { icon: React.ElementType, label: string, value: string | undefined }) => (
@@ -70,16 +79,8 @@ const DetailRow = ({ icon: Icon, label, value }: { icon: React.ElementType, labe
     </div>
 )
 
-export default function DashboardClient({ student, bills, notices }: DashboardClientProps) {
-    const { toast } = useToast();
+export default function DashboardClient({ student, bills: receipts, notices, notes }: DashboardClientProps) {
     const { t } = useLanguage();
-
-    const handlePayFee = (billNumber: string) => {
-        toast({
-            title: t('dashboard_page.payment_toast_title'),
-            description: t('dashboard_page.payment_toast_desc').replace('{billNumber}', billNumber),
-        });
-    };
 
     return (
         <div className="space-y-8">
@@ -143,60 +144,78 @@ export default function DashboardClient({ student, bills, notices }: DashboardCl
                 </div>
 
 
-                <Card className="lg:col-span-2">
-                    <CardHeader>
-                    <CardTitle className="font-headline">{t('dashboard_page.card_title')}</CardTitle>
-                    <CardDescription>
-                        {t('dashboard_page.card_desc')}
-                    </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                    <Table>
-                        <TableHeader>
-                        <TableRow>
-                            <TableHead>{t('dashboard_page.table_header_date')}</TableHead>
-                            <TableHead>{t('dashboard_page.table_header_bill_no')}</TableHead>
-                            <TableHead>{t('dashboard_page.table_header_status')}</TableHead>
-                            <TableHead className="text-right">{t('dashboard_page.table_header_amount')}</TableHead>
-                            <TableHead className="text-right">{t('dashboard_page.table_header_action')}</TableHead>
-                        </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                        {bills.length === 0 ? (
+                <div className="lg:col-span-2 space-y-8">
+                    <Card>
+                        <CardHeader>
+                        <CardTitle className="font-headline">{t('dashboard_page.card_title_receipts')}</CardTitle>
+                        <CardDescription>
+                            {t('dashboard_page.card_desc_receipts')}
+                        </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                        <Table>
+                            <TableHeader>
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center h-24">
-                                    {t('dashboard_page.no_bills')}
-                                </TableCell>
+                                <TableHead>{t('dashboard_page.table_header_date')}</TableHead>
+                                <TableHead>{t('dashboard_page.table_header_receipt_no')}</TableHead>
+                                <TableHead>{t('dashboard_page.table_header_description')}</TableHead>
+                                <TableHead className="text-right">{t('dashboard_page.table_header_amount')}</TableHead>
                             </TableRow>
-                        ) : (
-                            bills.map((bill) => (
-                            <TableRow key={bill.id}>
-                                <TableCell>{format(bill.createdAt.toDate(), 'PPP')}</TableCell>
-                                <TableCell className="font-mono">{bill.billNumber}</TableCell>
-                                <TableCell>
-                                    <Badge variant={bill.status === "paid" ? "default" : "destructive"} className={bill.status === 'paid' ? 'bg-green-600' : ''}>
-                                    {bill.status === 'paid' ? t('dashboard_page.fee_status_paid') : t('dashboard_page.fee_status_due')}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell className="text-right font-medium">₹{bill.total.toFixed(2)}</TableCell>
-                                <TableCell className="text-right">
-                                    {bill.status === "unpaid" ? (
-                                    <Button onClick={() => handlePayFee(bill.billNumber)} size="sm">
-                                        {t('dashboard_page.pay_online')}
-                                    </Button>
-                                    ) : (
-                                    <Button variant="outline" size="sm" disabled>
-                                        {t('common.view_details')}
-                                    </Button>
-                                    )}
-                                </TableCell>
-                            </TableRow>
-                            ))
-                        )}
-                        </TableBody>
-                    </Table>
-                    </CardContent>
-              </Card>
+                            </TableHeader>
+                            <TableBody>
+                            {receipts.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center h-24">
+                                        {t('dashboard_page.no_receipts')}
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                receipts.map((receipt) => (
+                                <TableRow key={receipt.id}>
+                                    <TableCell>{format(receipt.createdAt.toDate(), 'PPP')}</TableCell>
+                                    <TableCell className="font-mono">{receipt.receiptNo}</TableCell>
+                                    <TableCell>{`${receipt.feeType} Fee ${receipt.feeForMonths ? `(${receipt.feeForMonths})` : ''}`}</TableCell>
+                                    <TableCell className="text-right font-medium">₹{receipt.amount.toFixed(2)}</TableCell>
+                                </TableRow>
+                                ))
+                            )}
+                            </TableBody>
+                        </Table>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="font-headline">Downloads & Notes</CardTitle>
+                            <CardDescription>
+                                Important documents and study materials from the institute.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {notes.length === 0 ? (
+                                <p className="text-sm text-center text-muted-foreground py-4">No notes available right now.</p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {notes.map(note => (
+                                        <div key={note.id} className="flex items-center justify-between p-3 rounded-md border bg-muted/50">
+                                            <div className="flex items-center gap-3">
+                                                <FileIcon className="h-5 w-5 text-primary" />
+                                                <div>
+                                                    <p className="font-semibold">{note.title}</p>
+                                                    <p className="text-xs text-muted-foreground">{note.description}</p>
+                                                </div>
+                                            </div>
+                                            <Button asChild size="sm">
+                                                <a href={note.url} target="_blank" rel="noopener noreferrer">
+                                                    <Download className="mr-2 h-4 w-4" /> Download
+                                                </a>
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </div>
     );

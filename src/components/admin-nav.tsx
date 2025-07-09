@@ -3,17 +3,20 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FileText, MessageSquare, Receipt, FileStack, BellRing, Megaphone, GalleryHorizontal, HelpCircle, Briefcase } from 'lucide-react';
+import { FileText, MessageSquare, Receipt, FileStack, BellRing, Megaphone, GalleryHorizontal, HelpCircle, Briefcase, BookOpen, UserPlus, LayoutDashboard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import JtiLogo from './jti-logo';
 
 const navItems = [
+  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/applications', label: 'Applications', icon: BellRing },
   { href: '/admin/admissions', label: 'Admitted Students', icon: FileText },
+  { href: '/admin/add-students', label: 'Add Students', icon: UserPlus },
   { href: '/admin/career-profiles', label: 'Career Profiles', icon: Briefcase },
   { href: '/admin/billing', label: 'Bill Generator', icon: Receipt },
   { href: '/admin/bills', label: 'All Bills', icon: FileStack },
   { href: '/admin/notices', label: 'Notices', icon: Megaphone },
+  { href: '/admin/notes', label: 'Notes', icon: BookOpen },
   { href: '/admin/gallery', label: 'Gallery', icon: GalleryHorizontal },
   { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
   { href: '/admin/enquiries', label: 'Enquiries', icon: HelpCircle },
@@ -36,7 +39,7 @@ export default function AdminNav() {
                 href={item.href}
                 className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
-                  (pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href))) && 'bg-muted text-primary'
+                  (item.href === '/admin' ? pathname === item.href : pathname.startsWith(item.href)) ? 'bg-muted text-primary' : ''
                 )}
               >
                 <item.icon className="h-4 w-4" />
