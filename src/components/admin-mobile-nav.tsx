@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FileText, Receipt, BellRing, Megaphone, MoreHorizontal, MessageSquare, FileStack, GalleryHorizontal, HelpCircle, Briefcase, BookOpen, UserPlus, LayoutDashboard } from 'lucide-react';
+import { FileText, Receipt, BellRing, Megaphone, MoreHorizontal, MessageSquare, FileStack, GalleryHorizontal, HelpCircle, Briefcase, BookOpen, UserPlus, LayoutDashboard, BadgeCheck, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
 
@@ -14,10 +15,17 @@ const mainNavItems = [
     { href: '/admin/billing', label: 'Billing', icon: Receipt },
 ];
 
-const moreNavItems = [
+const allNavItems = [
+    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/applications', label: 'Applications', icon: BellRing },
+    { href: '/admin/admissions', label: 'Admissions', icon: FileText },
     { href: '/admin/add-students', label: 'Add Students', icon: UserPlus },
+    { href: '/admin/career-profiles', label: 'Career Profiles', icon: Briefcase },
+    { href: '/admin/instructors', label: 'Instructors', icon: GraduationCap },
+    { href: '/admin/placements', label: 'Placements', icon: GraduationCap },
+    { href: '/admin/billing', label: 'Bill Generator', icon: Receipt },
     { href: '/admin/bills', label: 'All Bills', icon: FileStack },
-    { href: '/admin/career-profiles', label: 'Profiles', icon: Briefcase },
+    { href: '/admin/certificates', label: 'Certificates', icon: BadgeCheck },
     { href: '/admin/notices', label: 'Notices', icon: Megaphone },
     { href: '/admin/notes', label: 'Notes', icon: BookOpen },
     { href: '/admin/gallery', label: 'Gallery', icon: GalleryHorizontal },
@@ -75,13 +83,13 @@ export default function AdminMobileNav() {
           </SheetTrigger>
           <SheetContent side="bottom" className="h-auto rounded-t-lg">
              <SheetHeader>
-                <SheetTitle className="sr-only">More Options</SheetTitle>
+                <SheetTitle>All Admin Pages</SheetTitle>
                 <SheetDescription className="sr-only">
                     Additional navigation links for the admin panel.
                 </SheetDescription>
              </SheetHeader>
              <nav className="grid grid-cols-3 gap-2 p-4">
-                {moreNavItems.map(item => (
+                {allNavItems.map(item => (
                     <MoreLink key={item.href} {...item} />
                 ))}
              </nav>

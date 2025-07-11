@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FileText, MessageSquare, Receipt, FileStack, BellRing, Megaphone, GalleryHorizontal, HelpCircle, Briefcase, BookOpen, UserPlus, LayoutDashboard } from 'lucide-react';
+import { FileText, MessageSquare, Receipt, FileStack, BellRing, Megaphone, GalleryHorizontal, HelpCircle, Briefcase, BookOpen, UserPlus, LayoutDashboard, GraduationCap, BadgeCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import JtiLogo from './jti-logo';
 
@@ -13,8 +13,11 @@ const navItems = [
   { href: '/admin/admissions', label: 'Admitted Students', icon: FileText },
   { href: '/admin/add-students', label: 'Add Students', icon: UserPlus },
   { href: '/admin/career-profiles', label: 'Career Profiles', icon: Briefcase },
+  { href: '/admin/instructors', label: 'Instructors', icon: GraduationCap },
+  { href: '/admin/placements', label: 'Placements', icon: GraduationCap },
   { href: '/admin/billing', label: 'Bill Generator', icon: Receipt },
   { href: '/admin/bills', label: 'All Bills', icon: FileStack },
+  { href: '/admin/certificates', label: 'Certificates', icon: BadgeCheck },
   { href: '/admin/notices', label: 'Notices', icon: Megaphone },
   { href: '/admin/notes', label: 'Notes', icon: BookOpen },
   { href: '/admin/gallery', label: 'Gallery', icon: GalleryHorizontal },
@@ -28,8 +31,7 @@ export default function AdminNav() {
   return (
     <aside className="w-64 bg-card border-r hidden md:block">
       <div className="p-4 border-b flex items-center gap-4">
-        <JtiLogo size="small" />
-        <h2 className="text-xl font-bold font-headline">Admin Panel</h2>
+        <JtiLogo size="large" />
       </div>
       <nav className="p-4">
         <ul>

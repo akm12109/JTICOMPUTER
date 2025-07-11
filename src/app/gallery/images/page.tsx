@@ -89,13 +89,13 @@ export default function ImageGalleryPage() {
       </div>
       
       <Dialog open={!!selectedImage} onOpenChange={(isOpen) => !isOpen && setSelectedImage(null)}>
-        <DialogContent className="max-w-4xl p-0 border-0 bg-transparent">
+        <DialogContent className="max-w-4xl h-[80vh] p-0 border-0 bg-transparent flex items-center justify-center">
           <DialogHeader className="sr-only">
             <DialogTitle>Image Preview</DialogTitle>
             <DialogDescription>A larger view of the selected gallery image.</DialogDescription>
           </DialogHeader>
           {selectedImage && (
-            <div className="relative aspect-video">
+            <div className="relative w-full h-full">
                  <Image src={selectedImage} alt="Selected gallery image" fill className="object-contain" />
             </div>
           )}

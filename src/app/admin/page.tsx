@@ -3,10 +3,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, getDocs, query, where, Timestamp, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, where, Timestamp, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { BellRing, Users, MessageSquare, HelpCircle, FileText, Banknote, Database, Cloud, ExternalLink, Megaphone, UserCheck, UserPlus, Image as ImageIcon, BookOpen, AlertCircle } from 'lucide-react';
+import { BellRing, Users, MessageSquare, HelpCircle, FileText, Banknote, Database, Cloud, ExternalLink, Megaphone, UserCheck, UserPlus, Image as ImageIcon, BookOpen, AlertCircle, GraduationCap } from 'lucide-react';
 import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from 'recharts';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -139,7 +139,9 @@ const ActivityItem = ({ activity }: { activity: any }) => {
         note_published: { icon: BookOpen, color: "text-yellow-500" },
         notice_published: { icon: Megaphone, color: "text-orange-500" },
         new_enquiry: { icon: HelpCircle, color: "text-indigo-500" },
-        new_message: { icon: MessageSquare, color: "text-pink-500" }
+        new_message: { icon: MessageSquare, color: "text-pink-500" },
+        instructor_added: { icon: GraduationCap, color: "text-teal-500" },
+        placement_added: { icon: GraduationCap, color: "text-cyan-500" },
     };
 
     const { icon: Icon, color } = iconMap[activity.type] || { icon: AlertCircle, color: "text-gray-500" };
@@ -222,11 +224,10 @@ export default function AdminDashboardPage() {
             if (!db) { setLoadingActivity(false); return; }
             setLoadingActivity(true);
             try {
-                const twentyFourHoursAgo = Timestamp.fromMillis(Date.now() - 24 * 60 * 60 * 1000);
                 const q = query(
                     collection(db, 'activity_log'),
-                    where('timestamp', '>=', twentyFourHoursAgo),
-                    orderBy('timestamp', 'desc')
+                    orderBy('timestamp', 'desc'),
+                    limit(20)
                 );
                 const querySnapshot = await getDocs(q);
                 const logData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -269,7 +270,7 @@ export default function AdminDashboardPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Recent Activity</CardTitle>
-                    <CardDescription>A live feed of events from the last 24 hours.</CardDescription>
+                    <CardDescription>A live feed of the most recent events.</CardDescription>
                 </CardHeader>
                 <CardContent className="max-h-96 overflow-y-auto">
                      {loadingActivity ? (
@@ -278,7 +279,7 @@ export default function AdminDashboardPage() {
                         </div>
                     ) : activityLog.length === 0 ? (
                         <div className="text-center text-muted-foreground py-10">
-                            <p>No activity in the last 24 hours.</p>
+                            <p>No recent activity.</p>
                         </div>
                     ) : (
                         <div className="space-y-1">

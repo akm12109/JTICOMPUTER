@@ -5,7 +5,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useFieldArray } from "react-hook-form"
 import * as z from "zod"
-import { useRouter } from "next/navigation"
 import { collection, serverTimestamp, doc, runTransaction } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import React, { useRef } from "react"
@@ -61,7 +60,7 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
-type ApplicationForPdf = FormValues & { slNo: number; createdAt: { toDate: () => Date } };
+type ApplicationForPdf = FormValues & { slNo: number; createdAt: Date };
 
 const getCurrentSession = () => {
     const currentYear = new Date().getFullYear();
@@ -212,7 +211,7 @@ export default function RegisterForm() {
 
             toast({ title: t('admission_page.success_title'), description: t('admission_page.success_desc') });
             
-            const dataForPdf = { ...dataToSubmit, slNo: newSlNo, createdAt: { toDate: () => new Date() } };
+            const dataForPdf = { ...dataToSubmit, slNo: newSlNo, createdAt: new Date() };
             setSubmittedData(dataForPdf);
 
             form.reset();

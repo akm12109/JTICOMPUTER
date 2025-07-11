@@ -11,23 +11,40 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const file = formData.get('file') as File | null;
+  const isNote = formData.get('isNote') === 'true';
 
   if (!file) {
     return NextResponse.json({ error: 'No file uploaded.' }, { status: 400 });
   }
   
-  // Check file size (max 25 MB)
-  const MAX_FILE_SIZE = 25 * 1024 * 1024;
-  if (file.size > MAX_FILE_SIZE) {
+  // Check file size (max 50 MB for notes, 25MB for others)
+  const MAX_FILE_SIZE_NOTE = 50 * 1024 * 1024;
+  const MAX_FILE_SIZE_GENERAL = 25 * 1024 * 1024;
+
+  if (isNote && file.size > MAX_FILE_SIZE_NOTE) {
+    return NextResponse.json({ error: `File size exceeds 50 MB.` }, { status: 413 });
+  }
+  if (!isNote && file.size > MAX_FILE_SIZE_GENERAL) {
       return NextResponse.json({ error: 'File size exceeds 25 MB.' }, { status: 413 }); // 413 Payload Too Large
   }
 
-  // We need to re-create the form data to add the upload preset
+  let resourceType = 'auto';
+  if (isNote) {
+    resourceType = 'raw';
+  } else if (file.type.startsWith('video')) {
+    resourceType = 'video';
+  } else if (file.type.startsWith('image')) {
+    resourceType = 'image';
+  }
+
+
   const cloudinaryFormData = new FormData();
   cloudinaryFormData.append('file', file);
   cloudinaryFormData.append('upload_preset', uploadPreset);
+  if (isNote) {
+    cloudinaryFormData.append('public_id', `notes/${file.name}`);
+  }
 
-  const resourceType = file.type.startsWith('video') ? 'video' : 'image';
   const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
 
   try {
@@ -39,7 +56,6 @@ export async function POST(request: Request) {
     const data = await response.json();
 
     if (!response.ok) {
-      // Pass Cloudinary's error message to the client
       const errorMessage = data?.error?.message || 'Upload to Cloudinary failed.';
       return NextResponse.json({ error: errorMessage }, { status: response.status });
     }

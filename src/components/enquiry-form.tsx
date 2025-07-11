@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarIcon, Send, Loader2 } from "lucide-react";
+import { Send, Loader2 } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { courseKeys } from "@/lib/course-data";
@@ -43,14 +43,8 @@ const formSchema = z.object({
   phone: z.string().min(10, { message: "Phone number must be at least 10 digits." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
   dob: z.string()
-    .min(10, { message: "Please use DD-MM-YYYY format."})
-    .refine(val => {
-        const parts = val.match(/^(\d{2})[-/.](\d{2})[-/.](\d{4})$/);
-        if (!parts) return false;
-        const [, day, month, year] = parts;
-        const date = new Date(`${year}-${month}-${day}T00:00:00Z`);
-        return isValid(date) && date.getDate() === parseInt(day, 10) && date.getMonth() + 1 === parseInt(month, 10);
-    }, {message: "Invalid date. Please use DD-MM-YYYY format."}),
+    .min(1, { message: "A date of birth is required."})
+    .refine(val => isValid(new Date(val)), {message: "Please enter a valid date."}),
   nationality: z.string().min(2, { message: "Nationality is required." }),
   category: z.string({ required_error: "Please select a category." }),
   gender: z.string({ required_error: "Please select a gender." }),
@@ -157,8 +151,7 @@ export default function EnquiryForm() {
         }
 
         const { isSameAddress, ...submissionData } = values;
-        const [day, month, year] = values.dob.split(/[-/.]/);
-        const dobForFirestore = new Date(`${year}-${month}-${day}`);
+        const dobForFirestore = new Date(values.dob);
 
         try {
             const counterRef = doc(db, 'counters', 'enquiryCounter');
@@ -250,7 +243,7 @@ export default function EnquiryForm() {
                                 <FormItem>
                                     <FormLabel>{t('enquiry_form.dob_label')}</FormLabel>
                                     <FormControl>
-                                        <Input placeholder={t('enquiry_form.dob_placeholder')} {...field} />
+                                        <Input type="date" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

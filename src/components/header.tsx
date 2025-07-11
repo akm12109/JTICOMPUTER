@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '@/components/ui/sheet';
-import { Menu, LogOut, LayoutDashboard, ChevronDown } from 'lucide-react';
+import { Menu, LogOut, LayoutDashboard, ChevronDown, GraduationCap, BadgeCheck } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
 import LanguageSwitcher from './language-switcher';
 import JtiLogo from './jti-logo';
@@ -31,6 +31,8 @@ const navItems = [
       { href: '/gallery/videos', labelKey: 'nav.video_gallery' },
     ],
   },
+  { href: '/placements', labelKey: 'nav.placements', icon: GraduationCap },
+  { href: '/verify-certificate', labelKey: 'nav.verify_certificate', icon: BadgeCheck },
   { href: '/about', labelKey: 'nav.about' },
   { href: '/enquiry', labelKey: 'nav.enquiry' },
   { href: '/contact', labelKey: 'nav.contact' },
@@ -65,7 +67,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
       <div className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <JtiLogo size="medium" />
+          <JtiLogo size="large" />
         </Link>
 
         {/* Desktop Navigation */}
@@ -89,15 +91,16 @@ export default function Header() {
               <Link
                 key={item.href}
                 href={item.href!}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary flex items-center gap-1.5"
               >
+                {item.icon && <item.icon className="h-4 w-4" />}
                 {t(item.labelKey)}
               </Link>
             )
           )}
           {user && user.email === 'admin@jtigodda.in' && (
              <Link
-              href="/admin/admissions"
+              href="/admin"
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
             >
               Admin
@@ -145,7 +148,7 @@ export default function Header() {
               </SheetHeader>
               <div className="flex flex-col gap-6 h-full">
                 <Link href="/" className="flex items-center gap-2">
-                  <JtiLogo size="medium" />
+                  <JtiLogo size="large" />
                 </Link>
                 <nav className="flex flex-col gap-4">
                   {navItems.flatMap((item) => 
@@ -161,7 +164,7 @@ export default function Header() {
                   ))}
                   {user && user.email === 'admin@jtigodda.in' && (
                     <Link
-                      href="/admin/admissions"
+                      href="/admin"
                       className="text-lg font-medium text-foreground hover:text-primary"
                     >
                       Admin

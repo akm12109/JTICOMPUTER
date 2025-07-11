@@ -1,9 +1,9 @@
 
+
 'use client';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,7 +14,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Inbox } from 'lucide-react';
 
 type Message = {
   id: string;
@@ -63,6 +63,49 @@ export default function MessagesPage() {
     )
   }
 
+  const renderContent = () => {
+    if (loading) {
+        return (
+            <div className="space-y-2">
+                {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
+            </div>
+        )
+    }
+
+    if (messages.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center text-center text-muted-foreground h-64 border-2 border-dashed rounded-lg">
+                <Inbox className="h-16 w-16 text-muted-foreground/50 mb-4" />
+                <h3 className="text-xl font-semibold">Message Box is Empty</h3>
+                <p>No new messages from the contact form.</p>
+            </div>
+        )
+    }
+
+    return (
+        <Accordion type="single" collapsible className="w-full">
+            {messages.map((message, index) => (
+                <AccordionItem value={`item-${index}`} key={message.id}>
+                    <AccordionTrigger>
+                        <div className="flex justify-between w-full pr-4">
+                            <div className="text-left">
+                                <p className="font-medium">{message.subject}</p>
+                                <p className="text-sm text-muted-foreground">{message.name} ({message.email})</p>
+                            </div>
+                            <p className="text-sm text-muted-foreground self-center">
+                                {message.createdAt?.toDate ? format(message.createdAt.toDate(), 'PP') : 'N/A'}
+                            </p>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-4 bg-muted/50 rounded-md">
+                        {message.message}
+                    </AccordionContent>
+                </AccordionItem>
+            ))}
+        </Accordion>
+    )
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -70,38 +113,7 @@ export default function MessagesPage() {
         <CardDescription>List of all messages received through the contact form.</CardDescription>
       </CardHeader>
       <CardContent>
-        {loading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
-        ) : (
-            messages.length === 0 ? (
-                 <p className="text-center text-muted-foreground py-8">No messages yet.</p>
-            ) : (
-                <Accordion type="single" collapsible className="w-full">
-                    {messages.map((message, index) => (
-                        <AccordionItem value={`item-${index}`} key={message.id}>
-                            <AccordionTrigger>
-                                <div className="flex justify-between w-full pr-4">
-                                    <div className="text-left">
-                                        <p className="font-medium">{message.subject}</p>
-                                        <p className="text-sm text-muted-foreground">{message.name} ({message.email})</p>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground self-center">
-                                        {format(message.createdAt.toDate(), 'PP')}
-                                    </p>
-                                </div>
-                            </AccordionTrigger>
-                            <AccordionContent className="p-4 bg-muted/50 rounded-md">
-                                {message.message}
-                            </AccordionContent>
-                        </AccordionItem>
-                    ))}
-                </Accordion>
-            )
-        )}
+        {renderContent()}
       </CardContent>
     </Card>
   );

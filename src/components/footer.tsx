@@ -13,7 +13,7 @@ export default function Footer() {
           {/* About Section */}
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-2">
-              <JtiLogo size="medium" />
+              <JtiLogo size="large" />
             </Link>
             <p className="text-sm text-muted-foreground">
               {t('footer.about_jti')}

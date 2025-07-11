@@ -1,10 +1,11 @@
 
+
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { collection, getDocs, query, addDoc, serverTimestamp, runTransaction, doc } from 'firebase/firestore';
+import { collection, getDocs, query, runTransaction, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -218,6 +219,7 @@ export default function BillingPage() {
       courseName: '',
       contactNo: '',
       session: '',
+      amount: 0,
       amountInWords: '',
       paymentMethod: 'Cash',
       feeType: 'Tution',
@@ -262,6 +264,7 @@ export default function BillingPage() {
   }, []);
   
   const handleGeneratePreview = async (values: ReceiptFormValues) => {
+    if (!db) return;
     const counterRef = doc(db, 'counters', 'receiptCounter');
     
     try {
@@ -368,12 +371,10 @@ export default function BillingPage() {
                   <FormLabel>Student</FormLabel>
                   <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                     <PopoverTrigger asChild>
-                      <FormControl>
                         <Button variant="outline" role="combobox" className={cn("w-full justify-between font-normal", !form.watch('studentName') && "text-muted-foreground")}>
                           {form.watch('studentName') || "Select or enter a student name"}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
-                      </FormControl>
                     </PopoverTrigger>
                     <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                        <Input
@@ -421,20 +422,71 @@ export default function BillingPage() {
                 
                 <Separator />
                 
-                <FormField control={form.control} name="feeType" render={({ field }) => (
-                  <FormItem> <FormLabel>Fee Type</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a fee type" /> </SelectTrigger> </FormControl> <SelectContent> <SelectItem value="Admission">Admission</SelectItem> <SelectItem value="Tution">Tution</SelectItem> <SelectItem value="Examination">Examination</SelectItem> <SelectItem value="Certification">Certification</SelectItem> <SelectItem value="Others">Others</SelectItem> </SelectContent> </Select> <FormMessage /> </FormItem>
-                )} />
+                <FormField
+                  control={form.control}
+                  name="feeType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fee Type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a fee type" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="Admission">Admission</SelectItem>
+                                <SelectItem value="Tution">Tution</SelectItem>
+                                <SelectItem value="Examination">Examination</SelectItem>
+                                <SelectItem value="Certification">Certification</SelectItem>
+                                <SelectItem value="Others">Others</SelectItem>
+                            </SelectContent>
+                        </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormField control={form.control} name="feeForMonths" render={({ field }) => ( <FormItem><FormLabel>For Month(s)</FormLabel><FormControl><Input placeholder="e.g., June or June-July" {...field} /></FormControl><FormMessage /></FormItem> )} />
                 
                 <div className="grid grid-cols-2 gap-4">
                    <FormField control={form.control} name="amount" render={({ field }) => ( <FormItem><FormLabel>Amount (Rs.)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem> )} />
-                   <FormField control={form.control} name="paymentMethod" render={({ field }) => (
-                      <FormItem> <FormLabel>Payment Method</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a method" /> </SelectTrigger> </FormControl> <SelectContent> <SelectItem value="Cash">Cash</SelectItem> <SelectItem value="DD">DD</SelectItem> <SelectItem value="Cheque">Cheque</SelectItem> <SelectItem value="UPI">UPI</SelectItem> </SelectContent> </Select> <FormMessage /> </FormItem>
-                   )} />
+                   <FormField
+                      control={form.control}
+                      name="paymentMethod"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Payment Method</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a method" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Cash">Cash</SelectItem>
+                              <SelectItem value="DD">DD</SelectItem>
+                              <SelectItem value="Cheque">Cheque</SelectItem>
+                              <SelectItem value="UPI">UPI</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                 </div>
-
-                 <FormField control={form.control} name="amountInWords" render={({ field }) => ( <FormItem><FormLabel>Amount in Words</FormLabel><FormControl><Input placeholder="e.g., Five Hundred" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                 
+                 <FormField 
+                    control={form.control} 
+                    name="amountInWords" 
+                    render={({ field }) => ( 
+                        <FormItem>
+                            <FormLabel>Amount in Words</FormLabel>
+                            <FormControl><Input placeholder="e.g., Five Hundred" {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem> 
+                    )} 
+                />
 
 
                 <Button type="submit" className="w-full">

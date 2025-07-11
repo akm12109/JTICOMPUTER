@@ -8,8 +8,8 @@ interface JtiLogoProps {
 export default function JtiLogo({ className, size = 'medium' }: JtiLogoProps) {
   const sizeClasses = {
     small: { width: 150, height: 33 },
-    medium: { width: 160, height: 35.2 },
-    large: { width: 180, height: 39.6 },
+    medium: { width: 180, height: 39.6 },
+    large: { width: 200, height: 44 },
   };
 
   const selectedSize = sizeClasses[size];
@@ -25,8 +25,8 @@ export default function JtiLogo({ className, size = 'medium' }: JtiLogoProps) {
       >
         <style>
           {`
-            .jti-text { font-family: 'Arial', sans-serif; font-weight: bold; fill: hsl(var(--primary)); }
-            .subtitle-text { font-family: 'Arial', sans-serif; fill: hsl(var(--muted-foreground)); }
+            .jti-text { font-family: 'Space Grotesk', sans-serif; font-weight: bold; fill: hsl(var(--primary)); }
+            .subtitle-text { font-family: 'Inter', sans-serif; fill: hsl(var(--muted-foreground)); }
             .primary-stroke { stroke: hsl(var(--primary)); }
           `}
         </style>
@@ -39,18 +39,18 @@ export default function JtiLogo({ className, size = 'medium' }: JtiLogoProps) {
           {/* Laptop */}
           <g>
              {/* Laptop base with keyboard */}
-            <path d="M -25 10 L 25 10 L 22 20 L -22 20 Z" fill="#6B7280" />
-            <rect x="-21" y="11" width="42" height="8" fill="#10B981" rx="1"/>
+            <path d="M -25 10 L 25 10 L 22 20 L -22 20 Z" fill="hsl(var(--muted-foreground))" />
+            <rect x="-21" y="11" width="42" height="8" fill="hsl(var(--accent))" rx="1"/>
 
             {/* Laptop screen */}
-            <rect x="-23" y="-15" width="46" height="25" fill="#6B7280" rx="1" />
-            <rect x="-21" y="-13" width="42" height="21" fill="white" />
+            <rect x="-23" y="-15" width="46" height="25" fill="hsl(var(--muted-foreground))" rx="1" />
+            <rect x="-21" y="-13" width="42" height="21" fill="hsl(var(--background))" />
             
             {/* Teacher icon */}
-            <g transform="translate(0, -4)" fill="#374151">
+            <g transform="translate(0, -4)" fill="hsl(var(--primary))">
               <path d="M -5 5 Q -5 0 0 0 T 5 5 V 10 H -5 Z" />
               <circle cx="0" cy="-3" r="3" />
-              <path d="M 5 6 L 10 1 L 18 -2" stroke="#374151" strokeWidth="2" fill="none" strokeLinecap="round" />
+              <path d="M 5 6 L 10 1 L 18 -2" stroke="hsl(var(--primary))" strokeWidth="2" fill="none" strokeLinecap="round" />
             </g>
           </g>
         </g>

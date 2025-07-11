@@ -6,10 +6,10 @@ import { collection, getDocs, orderBy, query, where, deleteDoc, doc, setDoc, ser
 import { db, firebaseConfig } from '@/lib/firebase';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, UserCheck, Trash2, Eye, Loader2, Download, Search } from 'lucide-react';
+import { AlertTriangle, UserCheck, Trash2, Eye, Loader2, Download, Search, Inbox } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { initializeApp, getApps, getApp, deleteApp } from 'firebase/app';
+import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -67,7 +67,11 @@ export default function ApplicationsPage() {
         const querySnapshot = await getDocs(q);
         const appsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Application[];
         
-        appsData.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+        appsData.sort((a, b) => {
+            const dateA = a.createdAt?.toDate()?.getTime() || 0;
+            const dateB = b.createdAt?.toDate()?.getTime() || 0;
+            return dateB - dateA;
+        });
         
         setApplications(appsData);
         setFilteredApplications(appsData);
@@ -202,6 +206,73 @@ export default function ApplicationsPage() {
     )
   }
 
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="space-y-2">
+            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+        </div>
+      );
+    }
+
+    if (applications.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center text-center text-muted-foreground h-64 border-2 border-dashed rounded-lg">
+          <Inbox className="h-16 w-16 text-muted-foreground/50 mb-4" />
+          <h3 className="text-xl font-semibold">No Pending Applications</h3>
+          <p>The application queue is empty.</p>
+        </div>
+      );
+    }
+    
+    return (
+        <div className="space-y-4">
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                placeholder="Search by name, email, or course..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+                />
+            </div>
+             {filteredApplications.length > 0 ? (
+                <Table>
+                    <TableHeader>
+                    <TableRow>
+                        <TableHead>Application Date</TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Course Applied For</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {filteredApplications.map(app => (
+                        <TableRow key={app.id}>
+                            <TableCell>{app.createdAt?.toDate ? format(app.createdAt.toDate(), 'PPP') : 'N/A'}</TableCell>
+                            <TableCell className="font-medium">{app.name}</TableCell>
+                            <TableCell>{app.email}</TableCell>
+                            <TableCell>{app.courseAppliedFor}</TableCell>
+                            <TableCell className="text-right">
+                            <Button variant="ghost" size="icon" onClick={() => { setAppToPreview(app); setPreviewOpen(true);}}>
+                                <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" onClick={() => { setSelectedApp(app); setModalOpen(true); }}>
+                                <UserCheck className="mr-2 h-4 w-4" /> Admit
+                            </Button>
+                            </TableCell>
+                        </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+             ) : (
+                <p className="text-center text-muted-foreground py-8">No matching applications found.</p>
+             )}
+        </div>
+    )
+  }
+
   return (
     <>
     <Card>
@@ -210,60 +281,7 @@ export default function ApplicationsPage() {
         <CardDescription>Review and approve new student admission applications.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name, email, or course..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-        </div>
-        {loading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Application Date</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Course Applied For</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredApplications.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center h-24">
-                    {searchTerm ? "No matching applications found." : "No pending applications."}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredApplications.map(app => (
-                  <TableRow key={app.id}>
-                    <TableCell>{format(app.createdAt.toDate(), 'PPP')}</TableCell>
-                    <TableCell className="font-medium">{app.name}</TableCell>
-                    <TableCell>{app.email}</TableCell>
-                    <TableCell>{app.courseAppliedFor}</TableCell>
-                    <TableCell className="text-right">
-                       <Button variant="ghost" size="icon" onClick={() => { setAppToPreview(app); setPreviewOpen(true);}}>
-                           <Eye className="h-4 w-4" />
-                       </Button>
-                       <Button size="sm" onClick={() => { setSelectedApp(app); setModalOpen(true); }}>
-                          <UserCheck className="mr-2 h-4 w-4" /> Admit
-                       </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        )}
+        {renderContent()}
       </CardContent>
     </Card>
 
@@ -304,7 +322,7 @@ export default function ApplicationsPage() {
             </DialogHeader>
             <div className="max-h-[70vh] overflow-y-auto p-1">
                 <div ref={applicationRef}>
-                    {appToPreview && <ApplicationPreview application={appToPreview} />}
+                    {appToPreview && <ApplicationPreview application={{...appToPreview, createdAt: appToPreview.createdAt.toDate()}} />}
                 </div>
             </div>
             <DialogFooter>

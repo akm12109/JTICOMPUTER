@@ -1,5 +1,21 @@
+
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
+
+function determineResourceType(publicId: string): 'image' | 'video' | 'raw' {
+  if (publicId.startsWith('notes/')) {
+    return 'raw';
+  }
+  
+  const extension = publicId.split('.').pop()?.toLowerCase();
+  const videoExtensions = ['mp4', 'mov', 'avi', 'wmv', 'flv', 'mkv', 'webm'];
+  
+  if (extension && videoExtensions.includes(extension)) {
+    return 'video';
+  }
+  
+  return 'image';
+}
 
 export async function POST(request: Request) {
   try {
@@ -24,7 +40,7 @@ export async function POST(request: Request) {
     if (!cloudName || !apiKey || !apiSecret) {
         return NextResponse.json({ error: `Cloudinary API credentials for deletion on '${account || 'main'}' account are not configured.` }, { status: 500 });
     }
-
+    
     // Configure a temporary cloudinary instance with the correct credentials
     const tempCloudinary = cloudinary.v2;
     tempCloudinary.config({
@@ -34,7 +50,9 @@ export async function POST(request: Request) {
     });
     
     // The `destroy` method securely deletes the asset from the specified Cloudinary account.
-    const result = await tempCloudinary.uploader.destroy(publicId, { resource_type: 'auto' });
+    const resourceType = determineResourceType(publicId);
+    
+    const result = await tempCloudinary.uploader.destroy(publicId, { resource_type: resourceType });
     
     if (result.result === 'ok' || result.result === 'not found') {
       return NextResponse.json({ success: true, message: `Deletion successful for ${publicId}` });

@@ -1,3 +1,4 @@
+
 'use client'
 
 import JtiLogo from '@/components/jti-logo';
@@ -10,9 +11,9 @@ type Application = {
   email: string;
   phone: string;
   address: string;
-  dob: { toDate: () => Date } | string;
+  dob: Date | string;
   courseAppliedFor: string;
-  createdAt: { toDate: () => Date };
+  createdAt: Date;
   slNo?: string;
   session?: string;
   sex?: string;
@@ -37,8 +38,8 @@ const DetailItem = ({ label, value }: { label: string, value: string | undefined
 
 export const ApplicationPreview = ({ application }: { application: Application }) => {
     
-    const dob = application.dob ? (application.dob as any).toDate ? (application.dob as any).toDate() : new Date(application.dob as string) : null;
-    const submissionDate = application.createdAt ? format(application.createdAt.toDate(), 'PPP') : 'N/A';
+    const dob = application.dob ? (typeof application.dob === 'string' ? new Date(application.dob) : application.dob) : null;
+    const submissionDate = application.createdAt ? format(application.createdAt, 'PPP') : 'N/A';
 
     return (
         <div className="p-8 bg-white text-black font-sans">
