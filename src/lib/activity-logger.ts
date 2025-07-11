@@ -11,7 +11,9 @@ export type ActivityType =
   | 'note_published' 
   | 'notice_published' 
   | 'new_enquiry' 
-  | 'new_message';
+  | 'new_message'
+  | 'instructor_added'
+  | 'placement_added';
 
 export interface ActivityPayload {
   description: string;

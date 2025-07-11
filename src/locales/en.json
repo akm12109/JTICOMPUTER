@@ -23,7 +23,9 @@
     "video_gallery": "Video Gallery",
     "about": "About Us",
     "enquiry": "Enquiry",
-    "contact": "Contact"
+    "contact": "Contact",
+    "placements": "Placements",
+    "verify_certificate": "Verify Certificate"
   },
   "welcome_modal": {
     "title": "Welcome to JTI Godda!",
@@ -90,7 +92,7 @@
     "offices_title": "Our Offices",
     "corporate_office": "Corporate Office",
     "corporate_office_address": "Lohiya Nagar, Godda, Jharkhand",
-    "asc_office": "Authorised Service Center (ASC)",
+    "asc_office": "Authorised Study Center (ASC)",
     "asc_office_address": "Gayatri Nagar, Nahar Chowk, Kanchankali Niketan, Godda, Jharkhand 814133",
     "basic_info": {
       "title": "Basic Information",
@@ -132,7 +134,7 @@
     "info_title": "Contact Information",
     "corporate_office_title": "Corporate Office",
     "address_value": "Lohiya Nagar, Godda, Jharkhand",
-    "asc_address_title": "Authorised Service Center",
+    "asc_address_title": "Authorised Study Center",
     "asc_address_value": "Gayatri Nagar, Nahar Chowk, Kanchankali Niketan, Godda, Jharkhand 814133",
     "email_title": "Email Us",
     "email_value": "info@jticomputer.in",
