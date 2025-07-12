@@ -1,3 +1,4 @@
+
 // src/app/admin/placements/page.tsx
 'use client';
 
@@ -12,7 +13,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
+import { db_secondary as db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { uploadFileWithProgress } from '@/lib/uploader';
 import { Progress } from '@/components/ui/progress';
@@ -86,7 +87,7 @@ export default function PlacementsAdminPage() {
         try {
             const responseData = await uploadFileWithProgress('/api/upload', values.photo, {
               onProgress: setUploadProgress
-            });
+            }, false, 'main'); // account is 'main'
 
             const { secure_url, public_id } = responseData;
             

@@ -1,11 +1,10 @@
 
-
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { collection, getDocs, query, runTransaction, doc } from 'firebase/firestore';
+import { collection, getDocs, query, runTransaction, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,6 +24,8 @@ import { useToast } from '@/hooks/use-toast';
 import JtiLogo from '@/components/jti-logo';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 type Admission = {
   uid: string;
@@ -50,14 +51,26 @@ const receiptSchema = z.object({
   feeForMonths: z.string().optional(),
   amount: z.coerce.number().positive({ message: 'Amount must be a positive number.' }),
   amountInWords: z.string().min(3, { message: "Amount in words is required." }),
-  paymentMethod: z.enum(['Cash', 'DD', 'Cheque', 'UPI']),
+  
+  isPaid: z.boolean().default(false),
+  paymentMethod: z.enum(['Cash', 'UPI', 'Card']).optional(),
+}).refine(data => {
+    if (data.isPaid) {
+        return !!data.paymentMethod;
+    }
+    return true;
+}, {
+    message: "Payment method is required when receipt is marked as paid.",
+    path: ["paymentMethod"],
 });
+
 
 type ReceiptFormValues = z.infer<typeof receiptSchema>;
 
 interface ReceiptDetails extends ReceiptFormValues {
   date: string;
   receiptNo: string;
+  paymentMethodDisplay: string;
 }
 
 const ReceiptPreview = ({ receipt }: { receipt: ReceiptDetails }) => (
@@ -120,7 +133,7 @@ const ReceiptPreview = ({ receipt }: { receipt: ReceiptDetails }) => (
              <p className="pt-2">
                 Paid the {receipt.feeType} Fee for the month of 
                 <span className="font-semibold px-2 inline-block border-b border-dotted border-black min-w-[100px] text-center">{receipt.feeForMonths}</span>
-                By {receipt.paymentMethod}.
+                By {receipt.paymentMethodDisplay}.
             </p>
 
              <div className="flex pt-2">
@@ -209,6 +222,12 @@ export default function BillingPage() {
         setIsPrinting(false);
     }
   };
+  
+  const getCurrentSession = () => {
+    const currentYear = new Date().getFullYear();
+    return `${currentYear}-${currentYear + 1}`;
+  };
+
 
   const form = useForm<ReceiptFormValues>({
     resolver: zodResolver(receiptSchema),
@@ -218,11 +237,12 @@ export default function BillingPage() {
       rollNo: '',
       courseName: '',
       contactNo: '',
-      session: '',
+      session: getCurrentSession(),
       amount: 0,
       amountInWords: '',
-      paymentMethod: 'Cash',
       feeType: 'Tution',
+      feeForMonths: '',
+      isPaid: false,
     },
   });
 
@@ -237,7 +257,7 @@ export default function BillingPage() {
          form.setValue('rollNo', student.slNo || '');
          form.setValue('courseName', student.courseAppliedFor || '');
          form.setValue('contactNo', student.phone || '');
-         form.setValue('session', student.session || '');
+         form.setValue('session', student.session || getCurrentSession());
        }
     }
   }, [searchParams, form, admissions]);
@@ -274,10 +294,13 @@ export default function BillingPage() {
             return lastReceiptNo + 1;
         });
 
+        const { isPaid, ...dbValues } = values;
+
         // For Firestore
         const dbDoc = {
           receiptNo: newReceiptNo.toString(),
-          ...values,
+          ...dbValues,
+          status: isPaid ? 'paid' : 'unpaid',
           createdAt: serverTimestamp(),
         };
         setReceiptToSave(dbDoc);
@@ -287,6 +310,7 @@ export default function BillingPage() {
           ...values,
           receiptNo: newReceiptNo.toString(),
           date: new Date().toLocaleDateString('en-GB'),
+          paymentMethodDisplay: isPaid ? (values.paymentMethod ?? 'N/A') : 'Unpaid'
         });
 
     } catch (error) {
@@ -316,12 +340,12 @@ export default function BillingPage() {
           rollNo: '',
           courseName: '',
           contactNo: '',
-          session: '',
+          session: getCurrentSession(),
           amount: 0,
           amountInWords: '',
-          paymentMethod: 'Cash',
           feeType: 'Tution',
           feeForMonths: '',
+          isPaid: false,
       });
       setReceiptData(null);
       setReceiptToSave(null);
@@ -346,6 +370,8 @@ export default function BillingPage() {
   }
 
   const studentNameValue = form.watch("studentName");
+  const isPaidValue = form.watch("isPaid");
+
 
   const filteredAdmissions = studentNameValue
     ? admissions.filter((s) =>
@@ -396,7 +422,7 @@ export default function BillingPage() {
                                 form.setValue("rollNo", admission.slNo || '');
                                 form.setValue("courseName", admission.courseAppliedFor || '');
                                 form.setValue("contactNo", admission.phone || '');
-                                form.setValue("session", admission.session || '');
+                                form.setValue("session", admission.session || getCurrentSession());
                                 setPopoverOpen(false);
                             }} className="text-sm p-2 hover:bg-accent cursor-pointer">
                                 {admission.name} ({admission.email})
@@ -449,32 +475,7 @@ export default function BillingPage() {
 
                 <FormField control={form.control} name="feeForMonths" render={({ field }) => ( <FormItem><FormLabel>For Month(s)</FormLabel><FormControl><Input placeholder="e.g., June or June-July" {...field} /></FormControl><FormMessage /></FormItem> )} />
                 
-                <div className="grid grid-cols-2 gap-4">
-                   <FormField control={form.control} name="amount" render={({ field }) => ( <FormItem><FormLabel>Amount (Rs.)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem> )} />
-                   <FormField
-                      control={form.control}
-                      name="paymentMethod"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Payment Method</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a method" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Cash">Cash</SelectItem>
-                              <SelectItem value="DD">DD</SelectItem>
-                              <SelectItem value="Cheque">Cheque</SelectItem>
-                              <SelectItem value="UPI">UPI</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                </div>
+                <FormField control={form.control} name="amount" render={({ field }) => ( <FormItem><FormLabel>Amount (Rs.)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem> )} />
                  
                  <FormField 
                     control={form.control} 
@@ -487,6 +488,61 @@ export default function BillingPage() {
                         </FormItem> 
                     )} 
                 />
+
+                <Separator />
+                
+                 <FormField
+                    control={form.control}
+                    name="isPaid"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
+                            <FormControl>
+                                <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                Mark as Paid
+                                </FormLabel>
+                            </div>
+                        </FormItem>
+                    )}
+                />
+
+                {isPaidValue && (
+                     <FormField
+                        control={form.control}
+                        name="paymentMethod"
+                        render={({ field }) => (
+                            <FormItem className="space-y-3">
+                                <FormLabel>Payment Method</FormLabel>
+                                <FormControl>
+                                <RadioGroup
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                    className="flex flex-col space-y-1"
+                                >
+                                    <FormItem className="flex items-center space-x-3 space-y-0">
+                                        <FormControl><RadioGroupItem value="Cash" /></FormControl>
+                                        <FormLabel className="font-normal">Cash</FormLabel>
+                                    </FormItem>
+                                    <FormItem className="flex items-center space-x-3 space-y-0">
+                                        <FormControl><RadioGroupItem value="UPI" /></FormControl>
+                                        <FormLabel className="font-normal">UPI</FormLabel>
+                                    </FormItem>
+                                    <FormItem className="flex items-center space-x-3 space-y-0">
+                                        <FormControl><RadioGroupItem value="Card" /></FormControl>
+                                        <FormLabel className="font-normal">Card</FormLabel>
+                                    </FormItem>
+                                </RadioGroup>
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
 
 
                 <Button type="submit" className="w-full">

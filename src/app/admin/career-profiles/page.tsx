@@ -7,10 +7,11 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { format, isValid } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Eye, Search } from 'lucide-react';
+import { AlertTriangle, Eye, Search, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
+import * as XLSX from 'xlsx';
 
 type Profile = {
   uid: string;
@@ -24,6 +25,7 @@ export default function CareerProfilesPage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [filteredProfiles, setFilteredProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
   const [firebaseConfigured, setFirebaseConfigured] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -60,6 +62,24 @@ export default function CareerProfilesPage() {
     );
     setFilteredProfiles(results);
   }, [searchTerm, profiles]);
+  
+  const handleExport = () => {
+    setIsExporting(true);
+    const dataToExport = profiles.map(profile => {
+      const { updatedAt, ...rest } = profile;
+      return {
+        ...rest,
+        profileUpdatedAt: updatedAt ? format(updatedAt.toDate(), 'yyyy-MM-dd HH:mm:ss') : 'N/A'
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "CareerProfiles");
+    XLSX.writeFile(workbook, "career_profiles_export.xlsx");
+    setIsExporting(false);
+  };
+
 
   if (!firebaseConfigured) {
     return (
@@ -75,9 +95,15 @@ export default function CareerProfilesPage() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Career Profiles</CardTitle>
-        <CardDescription>List of students who have filled out their detailed career profile.</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Career Profiles</CardTitle>
+          <CardDescription>List of students who have filled out their detailed career profile.</CardDescription>
+        </div>
+        <Button onClick={handleExport} disabled={isExporting || profiles.length === 0}>
+            {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+            {isExporting ? 'Exporting...' : 'Export All'}
+        </Button>
       </CardHeader>
       <CardContent>
         <div className="relative mb-4">

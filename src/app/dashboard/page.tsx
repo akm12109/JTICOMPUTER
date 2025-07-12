@@ -5,7 +5,7 @@ import DashboardClient from "@/components/dashboard-client";
 import { useLanguage } from "@/hooks/use-language";
 import { useAuth } from '@/hooks/use-auth';
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, db_secondary } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
@@ -61,7 +61,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user) {
       const fetchDashboardData = async () => {
-        if (!db) {
+        if (!db || !db_secondary) {
           setFirebaseConfigured(false);
           setLoading(false);
           return;
@@ -82,13 +82,13 @@ export default function DashboardPage() {
                 const billsData = billsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Receipt[];
                 setBills(billsData);
 
-                const noticesQuery = query(collection(db, 'notices'), orderBy('createdAt', 'desc'));
+                const noticesQuery = query(collection(db_secondary, 'notices'), orderBy('createdAt', 'desc'));
                 const noticesSnapshot = await getDocs(noticesQuery);
                 const noticesData = noticesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Notice[];
                 setNotices(noticesData);
 
                 const notesQuery = query(
-                    collection(db, 'notes'),
+                    collection(db_secondary, 'notes'),
                     where('target', 'in', ['Public', studentData.courseAppliedFor]),
                     orderBy('createdAt', 'desc')
                 );

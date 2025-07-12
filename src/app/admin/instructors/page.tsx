@@ -1,3 +1,4 @@
+
 // src/app/admin/instructors/page.tsx
 'use client';
 
@@ -13,11 +14,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
+import { db_secondary as db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { uploadFileWithProgress } from '@/lib/uploader';
 import { Progress } from '@/components/ui/progress';
 import { logActivity } from '@/lib/activity-logger';
+import { Form, FormField, FormItem } from '@/components/ui/form';
 
 const instructorSchema = z.object({
     name: z.string().min(2, "Name is required."),
@@ -94,7 +96,7 @@ export default function InstructorsPage() {
         try {
             const responseData = await uploadFileWithProgress('/api/upload', values.photo, {
               onProgress: setUploadProgress
-            });
+            }, false, 'main'); // account is 'main'
 
             const { secure_url, public_id } = responseData;
             
@@ -268,6 +270,3 @@ export default function InstructorsPage() {
         </div>
     );
 }
-
-// Add these imports to the top
-import { Form, FormField, FormItem } from '@/components/ui/form';

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState } from 'react';
@@ -12,7 +11,6 @@ import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { getApps, initializeApp, getApp, deleteApp } from 'firebase/app';
 import * as XLSX from 'xlsx';
 import { isValid } from 'date-fns';
-import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, UserPlus, Upload, FileDown, AlertTriangle, CheckCircle, XCircle, PlusCircle, Trash2, FileBadge } from 'lucide-react';
+import { Loader2, UserPlus, Upload, FileDown, AlertTriangle, CheckCircle, XCircle, PlusCircle, Trash2 } from 'lucide-react';
 import { courseKeys } from '@/lib/course-data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/hooks/use-language';
@@ -51,18 +49,16 @@ const singleStudentSchema = z.object({
     password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
     courseAppliedFor: z.string({ required_error: "Please select a course." }),
     qualifications: z.array(qualificationSchema).min(1, { message: "Please add at least one qualification." }),
-    photoDataUri: z.string().optional(),
-    signatureDataUri: z.string().optional(),
 });
 
-const bulkStudentSchema = z.object({
-  name: z.string().min(2, { message: 'Name is required' }),
-  email: z.string().email({ message: 'A valid email is required' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
-  fatherName: z.string().min(2, { message: "Father's name is required" }),
-  phone: z.string().min(10, { message: "Phone number is required" }),
-  courseAppliedFor: z.string({ required_error: 'Please select a course' }),
-  session: z.string().min(4, { message: 'Session is required (e.g., 2024-25)' }),
+const bulkStudentSchema = singleStudentSchema.extend({
+  // The bulk schema is now the same as the single schema, but we will handle qualifications differently
+  qualifications: z.union([
+    z.string().min(1, { message: "Qualifications are required." }),
+    z.array(qualificationSchema)
+  ]).refine(val => (typeof val === 'string' && val.length > 0) || (Array.isArray(val) && val.length > 0), {
+    message: "Qualifications cannot be empty."
+  })
 });
 
 type SingleStudentFormValues = z.infer<typeof singleStudentSchema>;
@@ -78,8 +74,6 @@ export default function AddStudentsPage() {
   const [isSubmittingSingle, setIsSubmittingSingle] = useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [signaturePreview, setSignaturePreview] = useState<string | null>(null);
 
   const [parsedData, setParsedData] = useState<BulkStudent[]>([]);
   const [fileName, setFileName] = useState('');
@@ -101,20 +95,21 @@ export default function AddStudentsPage() {
       name: "qualifications"
   });
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, setter: (dataUri: string) => void, fieldName: "photoDataUri" | "signatureDataUri") => {
-    const file = event.target.files?.[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const dataUri = reader.result as string;
-            setter(dataUri);
-            form.setValue(fieldName, dataUri);
-        };
-        reader.readAsDataURL(file);
+  const onSingleSubmit = async (values: SingleStudentFormValues) => {
+    setIsSubmittingSingle(true);
+    try {
+      await admitStudent(values);
+      toast({ title: 'Student Added!', description: `${values.name} has been added and their account is created.` });
+      form.reset();
+    } catch (error: any) {
+      console.error("Error admitting student:", error);
+      toast({ variant: 'destructive', title: "Admission Failed", description: error.message });
+    } finally {
+      setIsSubmittingSingle(false);
     }
   };
 
-  const handleAdmitStudent = async (studentData: SingleStudentFormValues | z.infer<typeof bulkStudentSchema>): Promise<string | null> => {
+  const admitStudent = async (studentData: SingleStudentFormValues) => {
     if (!db) throw new Error("Firebase not configured");
 
     let tempApp;
@@ -135,77 +130,18 @@ export default function AddStudentsPage() {
             admissionDate: serverTimestamp(),
             createdAt: serverTimestamp(),
         });
+        
+         await logActivity('student_added', {
+          description: `Admin added a new student: ${studentData.name}.`,
+          link: `/admin/students/${user.uid}`
+        });
 
-        return user.uid; // Return the new user's UID
     } catch(e) {
-        console.error("Error in handleAdmitStudent:", e);
-        throw e; // re-throw the error to be caught by the caller
+        console.error("Error in admitStudent:", e);
+        throw e;
     }
     finally {
         if (tempApp) await deleteApp(tempApp);
-    }
-  };
-
-
-  const uploadProfileMedia = async (dataUri: string): Promise<string | null> => {
-    try {
-        const response = await fetch('/api/upload-profile-media', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ file: dataUri }),
-        });
-        const responseData = await response.json();
-        if (!response.ok) {
-            throw new Error(responseData.error || 'Failed to upload profile media.');
-        }
-        return responseData.secure_url;
-    } catch (error) {
-        console.error(error);
-        toast({ variant: 'destructive', title: 'Upload Failed', description: (error as Error).message });
-        return null;
-    }
-  };
-
-  const onSingleSubmit = async (values: SingleStudentFormValues) => {
-    setIsSubmittingSingle(true);
-    try {
-      const dataToSubmit = { ...values };
-
-      if (dataToSubmit.photoDataUri && dataToSubmit.photoDataUri.startsWith('data:')) {
-          const photoUrl = await uploadProfileMedia(dataToSubmit.photoDataUri);
-          if (!photoUrl) {
-              setIsSubmittingSingle(false);
-              return;
-          }
-          dataToSubmit.photoDataUri = photoUrl;
-      }
-      
-      if (dataToSubmit.signatureDataUri && dataToSubmit.signatureDataUri.startsWith('data:')) {
-          const signatureUrl = await uploadProfileMedia(dataToSubmit.signatureDataUri);
-          if (!signatureUrl) {
-              setIsSubmittingSingle(false);
-              return;
-          }
-          dataToSubmit.signatureDataUri = signatureUrl;
-      }
-
-      const newStudentUid = await handleAdmitStudent(dataToSubmit);
-      if (newStudentUid) {
-        await logActivity('student_added', {
-          description: `Admin added a new student: ${values.name}.`,
-          link: `/admin/students/${newStudentUid}`
-        });
-      }
-
-      toast({ title: 'Student Added!', description: `${values.name} has been added and their account is created.` });
-      form.reset();
-      setPhotoPreview(null);
-      setSignaturePreview(null);
-    } catch (error: any) {
-      console.error("Error admitting student:", error);
-      toast({ variant: 'destructive', title: "Admission Failed", description: error.message });
-    } finally {
-      setIsSubmittingSingle(false);
     }
   };
 
@@ -224,12 +160,22 @@ export default function AddStudentsPage() {
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const json: any[] = XLSX.utils.sheet_to_json(worksheet);
+        const json: any[] = XLSX.utils.sheet_to_json(worksheet, {
+          // Convert date objects from Excel to YYYY-MM-DD strings
+          cellDates: true,
+          dateNF: 'yyyy-mm-dd',
+        });
 
-        const students: BulkStudent[] = json.map((row, index) => ({
+        const students: BulkStudent[] = json.map((row, index) => {
+          // If 'dob' is a Date object, format it correctly.
+          if (row.dob instanceof Date) {
+            row.dob = row.dob.toISOString().split('T')[0];
+          }
+          return {
             ...row,
-            originalRow: index + 2
-        }));
+            originalRow: index + 2,
+          };
+        });
         
         setParsedData(students);
       } catch (error) {
@@ -254,8 +200,37 @@ export default function AddStudentsPage() {
 
     for (const student of parsedData) {
         try {
+            // Validate the row data
             bulkStudentSchema.parse(student);
-            await handleAdmitStudent(student);
+            
+            // Parse the qualifications string
+            let parsedQualifications: any[] = [];
+            if (typeof student.qualifications === 'string') {
+              parsedQualifications = student.qualifications.split(';').map(q => {
+                const parts = q.split('|');
+                if (parts.length !== 5) throw new Error("Invalid qualification format. Expected 5 parts separated by '|'.");
+                return {
+                  examination: parts[0]?.trim(),
+                  board: parts[1]?.trim(),
+                  passingYear: parts[2]?.trim(),
+                  division: parts[3]?.trim(),
+                  percentage: parts[4]?.trim(),
+                };
+              });
+            } else {
+              // This case should ideally not happen if the file is correct
+              parsedQualifications = student.qualifications as any[];
+            }
+            
+            // Re-validate the parsed qualifications
+            z.array(qualificationSchema).min(1).parse(parsedQualifications);
+
+            const finalStudentData = {
+              ...student,
+              qualifications: parsedQualifications,
+            } as SingleStudentFormValues;
+
+            await admitStudent(finalStudentData);
             results.successful.push(student);
         } catch (error: any) {
             let errorMessage = "An unknown error occurred.";
@@ -279,8 +254,8 @@ export default function AddStudentsPage() {
   };
 
   const downloadSampleCSV = () => {
-    const headers = "name,email,password,fatherName,phone,courseAppliedFor,session";
-    const example = "John Doe,john.doe@example.com,tempPass123,Richard Doe,1234567890,Diploma in Computer Application (DCA),2024-25";
+    const headers = "session,name,fatherName,dob,sex,nationality,phone,address,email,password,courseAppliedFor,qualifications";
+    const example = `2024-25,John Doe,Richard Doe,2005-04-15,Male,Indian,1234567890,"123 Main St, Anytown","john.doe@example.com",tempPass123,"Diploma in Computer Application (DCA)","10th|CBSE|2020|1st|85%;12th|JAC|2022|1st|80%"`;
     const csvContent = `data:text/csv;charset=utf-8,${headers}\n${example}`;
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -307,7 +282,7 @@ export default function AddStudentsPage() {
           <TabsContent value="single" className="pt-6">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSingleSubmit)} className="space-y-4">
-                <FormField control={form.control} name="session" render={({ field }) => (<FormItem><FormLabel>{t('admission_page.session')}</FormLabel><FormControl><Input placeholder={t('admission_page.session_placeholder')} {...field} disabled /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="session" render={({ field }) => (<FormItem><FormLabel>{t('admission_page.session')}</FormLabel><FormControl><Input placeholder={t('admission_page.session_placeholder')} {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel>{t('admission_page.name_label')}</FormLabel><FormControl><Input placeholder={t('admission_page.name_placeholder')} {...field} /></FormControl><FormMessage /></FormItem> )} />
                   <FormField control={form.control} name="fatherName" render={({ field }) => ( <FormItem><FormLabel>{t('admission_page.father_name_label')}</FormLabel><FormControl><Input placeholder={t('admission_page.father_name_placeholder')} {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -366,46 +341,7 @@ export default function AddStudentsPage() {
                         <PlusCircle className="mr-2 h-4 w-4" /> {t('admission_page.add_qualification')}
                     </Button>
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-4">
-                    <div className="space-y-2">
-                        <FormLabel>{t('admission_page.photo')}</FormLabel>
-                        <div className="flex items-center gap-4">
-                            <div className="w-24 h-32 rounded-lg border-2 border-dashed flex items-center justify-center bg-muted overflow-hidden">
-                                {photoPreview ? (
-                                    <Image src={photoPreview} alt="Photo preview" width={96} height={128} className="object-cover w-full h-full" />
-                                ) : ( <Upload className="h-8 w-8 text-muted-foreground" /> )}
-                            </div>
-                            <FormField control={form.control} name="photoDataUri" render={({ field }) => (
-                                <FormItem><FormControl>
-                                    <Button asChild variant="outline" type="button"><label>
-                                        <Upload className="mr-2 h-4 w-4" /> {t('admission_page.upload_photo')}
-                                        <Input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, setPhotoPreview, 'photoDataUri')} className="hidden" />
-                                    </label></Button>
-                                </FormControl><FormMessage /></FormItem>
-                            )} />
-                        </div>
-                    </div>
-                    <div className="space-y-2">
-                        <FormLabel>{t('admission_page.signature')}</FormLabel>
-                        <div className="flex items-center gap-4">
-                            <div className="w-32 h-20 rounded-lg border-2 border-dashed flex items-center justify-center bg-muted overflow-hidden">
-                                {signaturePreview ? (
-                                    <Image src={signaturePreview} alt="Signature preview" width={128} height={80} className="object-contain w-full h-full" />
-                                ) : ( <FileBadge className="h-8 w-8 text-muted-foreground" /> )}
-                            </div>
-                            <FormField control={form.control} name="signatureDataUri" render={({ field }) => (
-                                <FormItem><FormControl>
-                                    <Button asChild variant="outline" type="button"><label>
-                                        <Upload className="mr-2 h-4 w-4" /> {t('admission_page.upload_signature')}
-                                        <Input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, setSignaturePreview, 'signatureDataUri')} className="hidden" />
-                                    </label></Button>
-                                </FormControl><FormMessage /></FormItem>
-                            )} />
-                        </div>
-                    </div>
-                </div>
-
+                
                 <Button type="submit" className="w-full" disabled={isSubmittingSingle}>
                   {isSubmittingSingle ? <Loader2 className="animate-spin" /> : <UserPlus className="mr-2" />}
                   Add Student
@@ -420,11 +356,13 @@ export default function AddStudentsPage() {
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Instructions for Bulk Upload</AlertTitle>
                     <AlertDescription>
-                        <p>Bulk upload only supports essential fields. More details like address, DOB, qualifications, and photos can be added later by editing the student's profile.</p>
+                        <p>Bulk upload now supports all fields. Please follow the format carefully.</p>
                         <ul className="list-disc pl-5 mt-2 space-y-1 text-sm">
                             <li>Upload a CSV or XLSX file.</li>
-                            <li>The first row must be a header with the exact names: `name`, `email`, `password`, `fatherName`, `phone`, `courseAppliedFor`, `session`.</li>
+                            <li>The first row must be a header with the exact names: `session`, `name`, `fatherName`, `dob`, `sex`, `nationality`, `phone`, `address`, `email`, `password`, `courseAppliedFor`, and `qualifications`.</li>
                             <li>`courseAppliedFor` must exactly match a course title from the dropdown list.</li>
+                            <li>The `qualifications` column must contain all qualifications in a single cell, separated by a semicolon (`;`). Each qualification's details must be separated by a pipe (`|`) in the order: `examination|board|passingYear|division|percentage`.</li>
+                            <li>Example for `qualifications`: `10th|CBSE|2020|1st|85%;12th|JAC|2022|1st|80%`</li>
                         </ul>
                         <Button variant="link" size="sm" onClick={downloadSampleCSV} className="p-0 h-auto mt-2">
                            <FileDown className="mr-2" /> Download sample CSV template

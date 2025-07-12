@@ -7,7 +7,7 @@ import { Camera, ImageOff } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db_secondary as db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type GalleryImage = {

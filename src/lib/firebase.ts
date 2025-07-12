@@ -3,52 +3,85 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getFirestore, type Firestore, enableIndexedDbPersistence } from "firebase/firestore";
 
+// --- Primary Firebase Configuration (for student data, auth, bills, applications, etc.) ---
 export const firebaseConfig = {
-  apiKey: "AIzaSyCzB_WUQ_0KQq3Ax3JdAoV6O3J1sfjF310",
-  authDomain: "jti-goddax.firebaseapp.com",
-  projectId: "jti-goddax",
-  storageBucket: "jti-goddax.firebasestorage.app",
-  messagingSenderId: "318958229300",
-  appId: "1:318958229300:web:eb969dcf573bcc2acb7761",
-  measurementId: "G-C2S1FKELW9"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
+
+// --- Secondary Firebase Configuration (for gallery, notes, public content, etc.) ---
+const firebaseConfigSecondary = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_SECONDARY_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_SECONDARY_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_SECONDARY_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_SECONDARY_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_SECONDARY_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_SECONDARY_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_SECONDARY_MEASUREMENT_ID
+};
+
 
 let app: FirebaseApp | undefined;
 let auth: Auth | undefined;
 let db: Firestore | undefined;
 
-if (typeof window !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.projectId) {
-  try {
-    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    auth = getAuth(app);
-    db = getFirestore(app);
+let app_secondary: FirebaseApp | undefined;
+let db_secondary: Firestore | undefined;
 
-    // Set Auth persistence to keep users logged in across sessions.
-    setPersistence(auth, browserLocalPersistence)
-      .catch((error) => {
+
+if (typeof window !== 'undefined') {
+  // Initialize Primary App
+  if (firebaseConfig.apiKey && firebaseConfig.projectId) {
+    try {
+      app = getApps().find(a => a.name === 'primary') || initializeApp(firebaseConfig, 'primary');
+      auth = getAuth(app);
+      db = getFirestore(app);
+
+      setPersistence(auth, browserLocalPersistence).catch((error) => {
         console.error("Error setting auth persistence: ", error);
       });
 
-    // Enable Firestore offline persistence
-    enableIndexedDbPersistence(db)
-      .catch((err) => {
-        if (err.code == 'failed-precondition') {
-          // Multiple tabs open, persistence can only be enabled
-          // in one tab at a time.
-          console.warn("Firestore persistence failed: another tab has it enabled.");
-        } else if (err.code == 'unimplemented') {
-          // The current browser does not support all of the
-          // features required to enable persistence
-          console.warn("Firestore persistence not supported in this browser.");
+      enableIndexedDbPersistence(db).catch((err) => {
+        if (err.code === 'failed-precondition') {
+          console.warn("Primary Firestore persistence failed: another tab has it enabled.");
+        } else if (err.code === 'unimplemented') {
+          console.warn("Primary Firestore persistence not supported in this browser.");
         }
       });
 
-  } catch (e) {
-    console.error("Could not initialize Firebase. Please check your .env.local file.", e);
+    } catch (e) {
+      console.error("Could not initialize Primary Firebase.", e);
+    }
+  } else {
+    console.warn("Primary Firebase environment variables are not set.");
   }
-} else if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-    console.warn("Firebase environment variables are not set. Firebase-dependent features will be disabled. Please create a .env.local file with your Firebase config.");
+
+  // Initialize Secondary App
+  if (firebaseConfigSecondary.apiKey && firebaseConfigSecondary.projectId) {
+      try {
+        app_secondary = getApps().find(a => a.name === 'secondary') || initializeApp(firebaseConfigSecondary, 'secondary');
+        db_secondary = getFirestore(app_secondary);
+        
+        enableIndexedDbPersistence(db_secondary).catch((err) => {
+             if (err.code === 'failed-precondition') {
+                console.warn("Secondary Firestore persistence failed: another tab has it enabled.");
+            } else if (err.code === 'unimplemented') {
+                console.warn("Secondary Firestore persistence not supported in this browser.");
+            }
+        });
+
+      } catch(e) {
+        console.error("Could not initialize Secondary Firebase.", e);
+      }
+  } else {
+     console.warn("Secondary Firebase environment variables are not set.");
+  }
+
 }
 
-
-export { app, auth, db };
+export { app, auth, db, db_secondary };

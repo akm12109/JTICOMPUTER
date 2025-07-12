@@ -7,10 +7,11 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Eye, Search } from 'lucide-react';
+import { AlertTriangle, Eye, Search, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
+import * as XLSX from 'xlsx';
 
 type Admission = {
   id: string;
@@ -24,6 +25,7 @@ export default function AdmissionsPage() {
   const [admissions, setAdmissions] = useState<Admission[]>([]);
   const [filteredAdmissions, setFilteredAdmissions] = useState<Admission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
   const [firebaseConfigured, setFirebaseConfigured] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -56,6 +58,26 @@ export default function AdmissionsPage() {
     );
     setFilteredAdmissions(results);
   }, [searchTerm, admissions]);
+  
+  const handleExport = () => {
+    setIsExporting(true);
+    // Use the full 'admissions' state, not the filtered one
+    const dataToExport = admissions.map(admission => {
+      // Flatten and format data for Excel
+      const { createdAt, ...rest } = admission;
+      return {
+        ...rest,
+        admissionDate: createdAt ? format(createdAt.toDate(), 'yyyy-MM-dd HH:mm:ss') : 'N/A'
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Admissions");
+    XLSX.writeFile(workbook, "admissions_export.xlsx");
+    setIsExporting(false);
+  };
+
 
   if (!firebaseConfigured) {
     return (
@@ -71,9 +93,15 @@ export default function AdmissionsPage() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Admitted Students</CardTitle>
-        <CardDescription>List of all students who have submitted an admission form.</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Admitted Students</CardTitle>
+          <CardDescription>List of all students who have submitted an admission form.</CardDescription>
+        </div>
+         <Button onClick={handleExport} disabled={isExporting || admissions.length === 0}>
+            {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+            {isExporting ? 'Exporting...' : 'Export All'}
+          </Button>
       </CardHeader>
       <CardContent>
          <div className="relative mb-4">

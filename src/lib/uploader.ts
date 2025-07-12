@@ -10,17 +10,25 @@ export interface UploadOptions {
  * @param url The API endpoint to upload to.
  * @param file The file object to upload.
  * @param options Callbacks for progress updates.
+ * @param isNote Optional flag for special handling of notes.
+ * @param account The Cloudinary account to use ('main' or 'profile').
  * @returns A promise that resolves with the server's JSON response.
  */
 export const uploadFileWithProgress = (
   url: string,
   file: File,
-  options?: UploadOptions
+  options?: UploadOptions,
+  isNote: boolean = false,
+  account: 'main' | 'profile' = 'main'
 ): Promise<any> => {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('account', account);
+    if (isNote) {
+      formData.append('isNote', 'true');
+    }
 
     xhr.open('POST', url, true);
 
@@ -66,16 +74,18 @@ export const uploadFileWithProgress = (
  * @param url The API endpoint to upload to.
  * @param dataUri The data URI string.
  * @param options Callbacks for progress updates.
+ * @param account The Cloudinary account to use.
  * @returns A promise that resolves with the server's JSON response.
  */
 export const uploadDataUriWithProgress = (
-  url: string,
+  apiUrl: string,
   dataUri: string,
-  options?: UploadOptions
+  options?: UploadOptions,
+  account: 'main' | 'profile' = 'main'
 ): Promise<any> => {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', url, true);
+    xhr.open('POST', apiUrl, true);
     xhr.setRequestHeader('Content-Type', 'application/json');
 
     // Simulate progress for data URI uploads, as xhr.upload.onprogress doesn't work for JSON bodies.
@@ -117,6 +127,6 @@ export const uploadDataUriWithProgress = (
       reject(new Error('Network error during upload.'));
     };
 
-    xhr.send(JSON.stringify({ file: dataUri }));
+    xhr.send(JSON.stringify({ url: dataUri, account }));
   });
 };

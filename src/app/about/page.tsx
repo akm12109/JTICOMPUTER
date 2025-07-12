@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { useState, useEffect } from 'react';
 import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db_secondary as db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type Instructor = {

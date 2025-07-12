@@ -5,7 +5,7 @@ import { useLanguage } from '@/hooks/use-language';
 import { Card, CardContent } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db_secondary as db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VideoOff } from 'lucide-react';
 

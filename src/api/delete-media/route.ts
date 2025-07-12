@@ -44,9 +44,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: `Cloudinary API credentials for deletion on '${account || 'main'}' account are not configured.` }, { status: 500 });
     }
     
-    // Configure a temporary cloudinary instance with the correct credentials
-    const tempCloudinary = cloudinary.v2;
-    tempCloudinary.config({
+    cloudinary.config({
         cloud_name: cloudName,
         api_key: apiKey,
         api_secret: apiSecret,
@@ -54,7 +52,7 @@ export async function POST(request: Request) {
     
     const resourceType = determineResourceType(publicId, providedResourceType);
     
-    const result = await tempCloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+    const result = await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
     
     if (result.result === 'ok' || result.result === 'not found') {
       return NextResponse.json({ success: true, message: `Deletion successful for ${publicId}` });

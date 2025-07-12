@@ -1,8 +1,7 @@
 
-
 'use client';
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
+import { db_secondary as db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -107,7 +106,7 @@ export default function GalleryAdminPage() {
         try {
             const responseData = await uploadFileWithProgress('/api/upload', file, {
               onProgress: setUploadProgress,
-            });
+            }, false, 'main'); // isNote=false, account='main'
 
             const { secure_url, public_id } = responseData;
             
@@ -175,7 +174,7 @@ export default function GalleryAdminPage() {
             const uploadResponse = await fetch('/api/upload-from-url', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url }),
+                body: JSON.stringify({ url, account: 'main' }),
             });
             const responseData = await uploadResponse.json();
             if (!uploadResponse.ok) {
@@ -229,32 +228,40 @@ export default function GalleryAdminPage() {
 
     const handleDelete = async (item: GalleryItem) => {
         if (!db) return;
-        if (!item.publicId) {
-            toast({ variant: 'destructive', title: 'Cannot Delete', description: 'This item does not have a public ID for Cloudinary deletion.' });
-            return;
-        }
-
+        
         const originalItems = [...galleryItems];
+        // Optimistically remove from UI
         setGalleryItems(prev => prev.filter(i => i.id !== item.id));
 
         try {
             const deleteResponse = await fetch('/api/delete-media', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ publicId: item.publicId, account: 'main' }) // Specify account
+                body: JSON.stringify({
+                    publicId: item.publicId,
+                    resourceType: item.type,
+                    account: 'main'
+                })
             });
 
             if (!deleteResponse.ok) {
-                const errorData = await deleteResponse.json();
-                throw new Error(errorData.error || 'Failed to delete from Cloudinary.');
+                let errorMessage = `Failed to delete from Cloudinary: ${deleteResponse.statusText}`;
+                try {
+                    const errorData = await deleteResponse.json();
+                    errorMessage = errorData.error || errorMessage;
+                } catch (e) {
+                    // Response was not JSON, stick with the status text
+                }
+                throw new Error(errorMessage);
             }
 
             await deleteDoc(doc(db, 'gallery', item.id));
-            
+
             toast({ title: 'Deleted Successfully', description: 'Media removed from gallery and Cloudinary.' });
         } catch (error: any) {
             console.error('Deletion failed:', error);
             toast({ variant: 'destructive', title: 'Deletion Failed', description: error.message });
+            // Rollback UI change on failure
             setGalleryItems(originalItems);
         }
     };

@@ -1,7 +1,8 @@
+
 'use client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
-import { db } from '@/lib/firebase';
+import { db_secondary as db } from '@/lib/firebase';
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';

@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -9,6 +8,11 @@ import CourseCard from '@/components/course-card';
 import Image from 'next/image';
 import { useLanguage } from '@/hooks/use-language';
 import { courseImages } from '@/lib/course-data';
+import NoticePopup from '@/components/notice-popup';
+import { collection, getDocs, limit, orderBy, query, where, Timestamp } from 'firebase/firestore';
+import { db_secondary } from '@/lib/firebase';
+import { useEffect, useState } from 'react';
+import HomepageSlideshow from '@/components/homepage-slideshow';
 
 const featuredCourseKeys = ['dca', 'adca', 'python'];
 
@@ -39,12 +43,47 @@ const testimonialData = [
   },
 ];
 
+type Notice = {
+  id: string;
+  title: string;
+  message: string;
+  createdAt: Timestamp;
+};
 
 export default function Home() {
   const { t } = useLanguage();
+  const [latestNotice, setLatestNotice] = useState<Notice | null>(null);
+
+  useEffect(() => {
+    const fetchLatestNotice = async () => {
+      if (!db_secondary) return;
+
+      try {
+        const sevenDaysAgo = Timestamp.fromMillis(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        
+        const q = query(
+          collection(db_secondary, 'notices'),
+          where('createdAt', '>=', sevenDaysAgo),
+          orderBy('createdAt', 'desc'),
+          limit(1)
+        );
+
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const doc = querySnapshot.docs[0];
+          setLatestNotice({ id: doc.id, ...doc.data() } as Notice);
+        }
+      } catch (error) {
+        console.error("Error fetching latest notice:", error);
+      }
+    };
+
+    fetchLatestNotice();
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen">
+       <NoticePopup notice={latestNotice} />
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative w-full py-20 md:py-32 lg:py-40">
@@ -76,6 +115,9 @@ export default function Home() {
             </div>
           </div>
         </section>
+        
+        {/* Slideshow Section */}
+        <HomepageSlideshow />
 
         {/* Why Choose Us Section */}
         <section className="w-full py-16 md:py-24 bg-background">

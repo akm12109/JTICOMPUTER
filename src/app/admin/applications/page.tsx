@@ -28,6 +28,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { ApplicationPreview } from '@/components/application-preview';
 import { logActivity } from '@/lib/activity-logger';
+import * as XLSX from 'xlsx';
 
 type Application = {
   id: string;
@@ -45,6 +46,7 @@ export default function ApplicationsPage() {
   const [firebaseConfigured, setFirebaseConfigured] = useState(true);
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [isAdmitting, setIsAdmitting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [tempPassword, setTempPassword] = useState('');
   const [isModalOpen, setModalOpen] = useState(false);
   const { toast } = useToast();
@@ -97,6 +99,27 @@ export default function ApplicationsPage() {
     );
     setFilteredApplications(results);
   }, [searchTerm, applications]);
+  
+  const handleExport = () => {
+    setIsExporting(true);
+    const dataToExport = applications.map(app => {
+      const { createdAt, dob, qualifications, ...rest } = app;
+      const formattedQualifications = qualifications?.map((q: any) => `${q.examination} (${q.board}, ${q.passingYear}) - ${q.percentage}`).join('; ') || 'N/A';
+      return {
+        ...rest,
+        qualifications: formattedQualifications,
+        applicationDate: createdAt ? format(createdAt.toDate(), 'yyyy-MM-dd HH:mm:ss') : 'N/A',
+        dob: dob ? format(dob.toDate(), 'yyyy-MM-dd') : 'N/A'
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Applications");
+    XLSX.writeFile(workbook, "pending_applications_export.xlsx");
+    setIsExporting(false);
+  };
+
 
   const handleGenerateApplicationPdf = async () => {
     const element = applicationRef.current;
@@ -276,9 +299,15 @@ export default function ApplicationsPage() {
   return (
     <>
     <Card>
-      <CardHeader>
-        <CardTitle>Pending Applications</CardTitle>
-        <CardDescription>Review and approve new student admission applications.</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Pending Applications</CardTitle>
+          <CardDescription>Review and approve new student admission applications.</CardDescription>
+        </div>
+        <Button onClick={handleExport} disabled={isExporting || applications.length === 0}>
+            {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+            {isExporting ? 'Exporting...' : 'Export All'}
+          </Button>
       </CardHeader>
       <CardContent>
         {renderContent()}

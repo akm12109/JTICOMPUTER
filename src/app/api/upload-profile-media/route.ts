@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { file } = await request.json();
+    const { file } = await request.json(); // 'file' will be the data URI
 
     if (!file) {
       return NextResponse.json({ error: 'No file data provided.' }, { status: 400 });
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        file: file, // This will be the data URI
+        file: file, 
         upload_preset: uploadPreset,
       }),
     });

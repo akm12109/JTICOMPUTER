@@ -3,7 +3,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db_secondary as db } from '@/lib/firebase';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,7 +14,9 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Inbox } from 'lucide-react';
+import { AlertTriangle, Inbox, Download, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import * as XLSX from 'xlsx';
 
 type Message = {
   id: string;
@@ -28,6 +30,7 @@ type Message = {
 export default function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
   const [firebaseConfigured, setFirebaseConfigured] = useState(true);
 
   useEffect(() => {
@@ -50,6 +53,24 @@ export default function MessagesPage() {
     };
     fetchMessages();
   }, []);
+  
+  const handleExport = () => {
+    setIsExporting(true);
+    const dataToExport = messages.map(msg => {
+      const { createdAt, ...rest } = msg;
+      return {
+        ...rest,
+        receivedAt: createdAt ? format(createdAt.toDate(), 'yyyy-MM-dd HH:mm:ss') : 'N/A'
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Messages");
+    XLSX.writeFile(workbook, "messages_export.xlsx");
+    setIsExporting(false);
+  };
+
 
   if (!firebaseConfigured) {
     return (
@@ -108,9 +129,15 @@ export default function MessagesPage() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Contact Messages</CardTitle>
-        <CardDescription>List of all messages received through the contact form.</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Contact Messages</CardTitle>
+          <CardDescription>List of all messages received through the contact form.</CardDescription>
+        </div>
+         <Button onClick={handleExport} disabled={isExporting || messages.length === 0}>
+            {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+            {isExporting ? 'Exporting...' : 'Export All'}
+          </Button>
       </CardHeader>
       <CardContent>
         {renderContent()}

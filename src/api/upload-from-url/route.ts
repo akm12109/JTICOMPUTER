@@ -1,6 +1,5 @@
 
 import { NextResponse } from 'next/server';
-import { v2 as cloudinary } from 'cloudinary';
 
 export async function POST(request: Request) {
   try {
@@ -51,3 +50,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Upload from URL failed. The URL might be invalid or inaccessible.' }, { status: 500 });
   }
 }
+
+    

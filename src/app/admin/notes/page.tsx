@@ -3,7 +3,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, orderBy, query, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db_secondary as db } from '@/lib/firebase';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -87,7 +87,7 @@ export default function NotesPage() {
         // Step 1: Upload file to Cloudinary
         const responseData = await uploadFileWithProgress('/api/upload', values.file, {
           onProgress: setUploadProgress
-        });
+        }, true); // Pass true for isNote
 
         const { secure_url, public_id } = responseData;
         
@@ -136,7 +136,7 @@ export default function NotesPage() {
         const deleteResponse = await fetch('/api/delete-media', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ publicId: note.publicId })
+            body: JSON.stringify({ publicId: note.publicId, resourceType: 'raw', account: 'main' })
         });
 
         if (!deleteResponse.ok) {

@@ -2,7 +2,7 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db_secondary as db } from '@/lib/firebase';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -21,6 +21,7 @@ import { EnquiryPreview } from '@/components/enquiry-preview';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Input } from '@/components/ui/input';
+import * as XLSX from 'xlsx';
 
 type Enquiry = {
   id: string;
@@ -47,6 +48,7 @@ export default function EnquiriesPage() {
   const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
   const [filteredEnquiries, setFilteredEnquiries] = useState<Enquiry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
   const [firebaseConfigured, setFirebaseConfigured] = useState(true);
   const { toast } = useToast();
   
@@ -88,6 +90,23 @@ export default function EnquiriesPage() {
     setFilteredEnquiries(results);
   }, [searchTerm, enquiries]);
 
+  const handleExport = () => {
+    setIsExporting(true);
+    const dataToExport = enquiries.map(enq => {
+      const { enquiryDate, dob, ...rest } = enq;
+      return {
+        ...rest,
+        enquiryDate: enquiryDate ? format(enquiryDate.toDate(), 'yyyy-MM-dd HH:mm:ss') : 'N/A',
+        dob: dob ? format(dob.toDate(), 'yyyy-MM-dd') : 'N/A'
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Enquiries");
+    XLSX.writeFile(workbook, "enquiries_export.xlsx");
+    setIsExporting(false);
+  };
 
   const handleGeneratePdf = async () => {
     const element = enquiryRef.current;
@@ -145,9 +164,15 @@ export default function EnquiriesPage() {
   return (
     <>
         <Card>
-        <CardHeader>
-            <CardTitle>Course Enquiries</CardTitle>
-            <CardDescription>List of all enquiries submitted through the form.</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Course Enquiries</CardTitle>
+              <CardDescription>List of all enquiries submitted through the form.</CardDescription>
+            </div>
+            <Button onClick={handleExport} disabled={isExporting || enquiries.length === 0}>
+              {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+              {isExporting ? 'Exporting...' : 'Export All'}
+            </Button>
         </CardHeader>
         <CardContent>
             <div className="relative mb-4">
