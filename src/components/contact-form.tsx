@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 import React from "react"
 import { collection, addDoc, serverTimestamp } from "firebase/firestore"
-import { db } from "@/lib/firebase"
+import { db_secondary as db } from "@/lib/firebase"
 
 import { Button } from "@/components/ui/button"
 import {

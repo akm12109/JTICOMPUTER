@@ -1,9 +1,8 @@
-
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FileText, MessageSquare, Receipt, FileStack, BellRing, Megaphone, GalleryHorizontal, HelpCircle, Briefcase, BookOpen, UserPlus, LayoutDashboard, GraduationCap, BadgeCheck } from 'lucide-react';
+import { FileText, MessageSquare, Receipt, FileStack, BellRing, Megaphone, GalleryHorizontal, HelpCircle, Briefcase, BookOpen, UserPlus, LayoutDashboard, GraduationCap, BadgeCheck, Camera } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import JtiLogo from './jti-logo';
 
@@ -21,6 +20,7 @@ const navItems = [
   { href: '/admin/notices', label: 'Notices', icon: Megaphone },
   { href: '/admin/notes', label: 'Notes', icon: BookOpen },
   { href: '/admin/gallery', label: 'Gallery', icon: GalleryHorizontal },
+  { href: '/admin/slideshow', label: 'Slideshow', icon: Camera },
   { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
   { href: '/admin/enquiries', label: 'Enquiries', icon: HelpCircle },
 ];

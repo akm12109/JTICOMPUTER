@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { collection, serverTimestamp, addDoc, doc, runTransaction } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db_secondary as db } from "@/lib/firebase";
 import React, { useRef } from "react";
 import { format, isValid } from "date-fns";
 import jsPDF from 'jspdf';

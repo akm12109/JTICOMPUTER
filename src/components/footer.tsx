@@ -27,6 +27,7 @@ export default function Footer() {
               <Link href="/about" className="text-sm hover:text-primary transition-colors">{t('nav.about')}</Link>
               <Link href="/courses" className="text-sm hover:text-primary transition-colors">{t('nav.courses')}</Link>
               <Link href="/gallery/images" className="text-sm hover:text-primary transition-colors">{t('nav.gallery')}</Link>
+              <Link href="/notes" className="text-sm hover:text-primary transition-colors">Notes</Link>
               <Link href="/contact" className="text-sm hover:text-primary transition-colors">{t('nav.contact')}</Link>
               <Link href="/login" className="text-sm hover:text-primary transition-colors">{t('common.login')}</Link>
             </nav>

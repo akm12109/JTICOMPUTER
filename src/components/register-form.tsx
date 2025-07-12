@@ -9,7 +9,6 @@ import { collection, serverTimestamp, doc, runTransaction } from "firebase/fires
 import { db } from "@/lib/firebase"
 import React, { useRef } from "react"
 import { isValid } from "date-fns"
-import Image from 'next/image';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -25,14 +24,12 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
-import { UserPlus, Upload, PlusCircle, Trash2, FileBadge, Loader2 } from "lucide-react"
+import { UserPlus, PlusCircle, Trash2, Loader2 } from "lucide-react"
 import { useLanguage } from "@/hooks/use-language";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { courseKeys } from "@/lib/course-data"
 import { Textarea } from "./ui/textarea"
 import { ApplicationPreview } from "./application-preview";
-import { uploadDataUriWithProgress } from "@/lib/uploader";
-import { Progress } from "./ui/progress";
 import { logActivity } from "@/lib/activity-logger";
 
 const qualificationSchema = z.object({
@@ -55,12 +52,10 @@ const formSchema = z.object({
     email: z.string().email({ message: "Please enter a valid email address." }),
     courseAppliedFor: z.string({ required_error: "Please select a course." }),
     qualifications: z.array(qualificationSchema).min(1, { message: "Please add at least one qualification." }),
-    photoDataUri: z.string().optional(),
-    signatureDataUri: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
-type ApplicationForPdf = FormValues & { slNo: number; createdAt: Date };
+type ApplicationForPdf = FormValues & { slNo: number; createdAt: Date; photoDataUri?: string; signatureDataUri?: string; };
 
 const getCurrentSession = () => {
     const currentYear = new Date().getFullYear();
@@ -71,12 +66,7 @@ export default function RegisterForm() {
     const { toast } = useToast()
     const { t } = useLanguage()
     const [loading, setLoading] = React.useState(false)
-    const [photoPreview, setPhotoPreview] = React.useState<string | null>(null);
-    const [signaturePreview, setSignaturePreview] = React.useState<string | null>(null);
     
-    const [uploadProgress, setUploadProgress] = React.useState<number | null>(null);
-    const [uploadMessage, setUploadMessage] = React.useState<string>("");
-
     const [submittedData, setSubmittedData] = React.useState<ApplicationForPdf | null>(null);
     const previewRef = useRef<HTMLDivElement>(null);
 
@@ -102,19 +92,6 @@ export default function RegisterForm() {
         control: form.control,
         name: "qualifications"
     });
-
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, setter: (dataUri: string) => void, fieldName: "photoDataUri" | "signatureDataUri") => {
-        const file = event.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const dataUri = reader.result as string;
-                setter(dataUri);
-                form.setValue(fieldName, dataUri);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
 
      const generateAndOpenPdf = React.useCallback(async (data: ApplicationForPdf) => {
         const element = previewRef.current;
@@ -171,20 +148,6 @@ export default function RegisterForm() {
         try {
             const dataToSubmit = { ...values };
 
-            if (dataToSubmit.photoDataUri && dataToSubmit.photoDataUri.startsWith('data:')) {
-                 setUploadMessage("Uploading photo...");
-                 const response = await uploadDataUriWithProgress('/api/upload-profile-media', dataToSubmit.photoDataUri, { onProgress: setUploadProgress });
-                 dataToSubmit.photoDataUri = response.secure_url;
-            }
-
-            if (dataToSubmit.signatureDataUri && dataToSubmit.signatureDataUri.startsWith('data:')) {
-                 setUploadMessage("Uploading signature...");
-                 const response = await uploadDataUriWithProgress('/api/upload-profile-media', dataToSubmit.signatureDataUri, { onProgress: setUploadProgress });
-                 dataToSubmit.signatureDataUri = response.secure_url;
-            }
-
-            setUploadMessage("Finalizing application...");
-
             const counterRef = doc(db, 'counters', 'admissionCounter');
 
             const newSlNo = await runTransaction(db, async (transaction) => {
@@ -215,16 +178,12 @@ export default function RegisterForm() {
             setSubmittedData(dataForPdf);
 
             form.reset();
-            setPhotoPreview(null);
-            setSignaturePreview(null);
 
         } catch (error: any) {
             console.error("Application submission error:", error);
             toast({ variant: 'destructive', title: 'Application Failed', description: error.message || 'An error occurred. Please try again.' });
         } finally {
             setLoading(false);
-            setUploadProgress(null);
-            setUploadMessage("");
         }
     }
 
@@ -233,7 +192,7 @@ export default function RegisterForm() {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <FormField control={form.control} name="session" render={({ field }) => (<FormItem><FormLabel>{t('admission_page.session')}</FormLabel><FormControl><Input placeholder={t('admission_page.session_placeholder')} {...field} disabled /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="session" render={({ field }) => (<FormItem><FormLabel>{t('admission_page.session')}</FormLabel><FormControl><Input placeholder={t('admission_page.session_placeholder')} {...field} /></FormControl><FormMessage /></FormItem>)} />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel>{t('admission_page.name_label')}</FormLabel><FormControl><Input placeholder={t('admission_page.name_placeholder')} {...field} /></FormControl><FormMessage /></FormItem> )} />
@@ -291,55 +250,6 @@ export default function RegisterForm() {
                         </Button>
                     </div>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-4">
-                        <div className="space-y-2">
-                            <FormLabel>{t('admission_page.photo')}</FormLabel>
-                            <div className="flex items-center gap-4">
-                                <div className="w-24 h-32 rounded-lg border-2 border-dashed flex items-center justify-center bg-muted overflow-hidden">
-                                    {photoPreview ? (
-                                        <Image src={photoPreview} alt="Photo preview" width={96} height={128} className="object-cover w-full h-full" />
-                                    ) : ( <Upload className="h-8 w-8 text-muted-foreground" /> )}
-                                </div>
-                                <FormField control={form.control} name="photoDataUri" render={({ field }) => (
-                                    <FormItem>
-                                        <FormControl>
-                                            <Button asChild variant="outline" type="button"><label>
-                                                <Upload className="mr-2 h-4 w-4" /> {t('admission_page.upload_photo')}
-                                                <Input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, setPhotoPreview, 'photoDataUri')} className="hidden" />
-                                            </label></Button>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <FormLabel>{t('admission_page.signature')}</FormLabel>
-                            <div className="flex items-center gap-4">
-                                <div className="w-32 h-20 rounded-lg border-2 border-dashed flex items-center justify-center bg-muted overflow-hidden">
-                                    {signaturePreview ? (
-                                        <Image src={signaturePreview} alt="Signature preview" width={128} height={80} className="object-contain w-full h-full" />
-                                    ) : ( <FileBadge className="h-8 w-8 text-muted-foreground" /> )}
-                                </div>
-                                <FormField control={form.control} name="signatureDataUri" render={({ field }) => (
-                                    <FormItem><FormControl>
-                                        <Button asChild variant="outline" type="button"><label>
-                                            <Upload className="mr-2 h-4 w-4" /> {t('admission_page.upload_signature')}
-                                            <Input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, setSignaturePreview, 'signatureDataUri')} className="hidden" />
-                                        </label></Button>
-                                    </FormControl><FormMessage /></FormItem>
-                                )} />
-                            </div>
-                        </div>
-                    </div>
-                    
-                    {loading && uploadProgress !== null && (
-                      <div className="space-y-2">
-                          <Label>{uploadMessage}</Label>
-                          <Progress value={uploadProgress} />
-                      </div>
-                    )}
-
                     <Button type="submit" className="w-full" disabled={loading}>
                         {loading ? <Loader2 className="animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
                         {loading ? t('admission_page.submitting_button') : t('common.submit_application')}

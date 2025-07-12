@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/hooks/use-language";
-import { User, Mail, Phone, Home, Calendar, BookOpen, GraduationCap, Megaphone, ArrowRight, Briefcase, Download, File as FileIcon } from 'lucide-react';
+import { User, Mail, Phone, Home, Calendar, BookOpen, GraduationCap, Megaphone, ArrowRight, Briefcase, Download, File as FileIcon, ImageUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
@@ -127,6 +127,23 @@ export default function DashboardClient({ student, bills: receipts, notices, not
                      <Card className="bg-primary/10 border-primary/20">
                         <CardHeader>
                             <div className="flex items-center gap-3">
+                                <ImageUp className="h-6 w-6 text-primary" />
+                                <CardTitle className="font-headline text-white">Update Profile Media</CardTitle>
+                            </div>
+                            <CardDescription className="text-neutral-300">Upload your photo and signature for your ID card and official records.</CardDescription>
+                        </CardHeader>
+                        <CardFooter>
+                            <Button asChild className="w-full" variant="secondary">
+                                <Link href="/dashboard/profile-media">
+                                    Upload Media
+                                    <ArrowRight className="ml-2 h-4 w-4" />
+                                </Link>
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                     <Card className="bg-primary/10 border-primary/20">
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
                                 <Briefcase className="h-6 w-6 text-primary" />
                                 <CardTitle className="font-headline text-white">{t('careers_page.card_title')}</CardTitle>
                             </div>
@@ -185,14 +202,14 @@ export default function DashboardClient({ student, bills: receipts, notices, not
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle className="font-headline">Downloads & Notes</CardTitle>
+                            <CardTitle className="font-headline">My Notes</CardTitle>
                             <CardDescription>
-                                Important documents and study materials from the institute.
+                                Study materials for your course and public announcements.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
                             {notes.length === 0 ? (
-                                <p className="text-sm text-center text-muted-foreground py-4">No notes available right now.</p>
+                                <p className="text-sm text-center text-muted-foreground py-4">No notes available for your course right now.</p>
                             ) : (
                                 <div className="space-y-2">
                                     {notes.map(note => (
@@ -205,9 +222,9 @@ export default function DashboardClient({ student, bills: receipts, notices, not
                                                 </div>
                                             </div>
                                             <Button asChild size="sm">
-                                                <a href={note.url} target="_blank" rel="noopener noreferrer">
-                                                    <Download className="mr-2 h-4 w-4" /> Download
-                                                </a>
+                                                <Link href={`/notes/${note.id}`}>
+                                                    <BookOpen className="mr-2 h-4 w-4" /> View Note
+                                                </Link>
                                             </Button>
                                         </div>
                                     ))}

@@ -1,10 +1,8 @@
-
-
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FileText, Receipt, BellRing, Megaphone, MoreHorizontal, MessageSquare, FileStack, GalleryHorizontal, HelpCircle, Briefcase, BookOpen, UserPlus, LayoutDashboard, BadgeCheck, GraduationCap } from 'lucide-react';
+import { FileText, Receipt, BellRing, Megaphone, MoreHorizontal, MessageSquare, FileStack, GalleryHorizontal, HelpCircle, Briefcase, BookOpen, UserPlus, LayoutDashboard, BadgeCheck, GraduationCap, Camera } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
 
@@ -29,6 +27,7 @@ const allNavItems = [
     { href: '/admin/notices', label: 'Notices', icon: Megaphone },
     { href: '/admin/notes', label: 'Notes', icon: BookOpen },
     { href: '/admin/gallery', label: 'Gallery', icon: GalleryHorizontal },
+    { href: '/admin/slideshow', label: 'Slideshow', icon: Camera },
     { href: '/admin/messages', label: 'Messages', icon: MessageSquare },
     { href: '/admin/enquiries', label: 'Enquiries', icon: HelpCircle },
 ];

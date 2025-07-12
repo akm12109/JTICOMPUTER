@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, serverTimestamp, setDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import React from "react";
 import Image from "next/image";
@@ -183,15 +183,25 @@ export default function CareerForm({ studentProfile }: CareerFormProps) {
       return;
     }
     try {
-      const dataToUpdate = { ...values };
+      const dataToUpdate = { ...values } as any;
 
       // Check if photo is a new upload (data URI)
       if (dataToUpdate.photoDataUri && dataToUpdate.photoDataUri.startsWith('data:')) {
         setUploadProgress(0);
-        const response = await uploadDataUriWithProgress('/api/upload-profile-media', dataToUpdate.photoDataUri, {
+        const response = await uploadDataUriWithProgress('/api/upload-from-url', dataToUpdate.photoDataUri, {
           onProgress: setUploadProgress
-        });
+        }, 'profile');
         dataToUpdate.photoDataUri = response.secure_url;
+      }
+      
+      // Convert date strings to Timestamps before sending to Firestore
+      if(dataToUpdate.admissionDate) {
+        dataToUpdate.admissionDate = Timestamp.fromDate(new Date(dataToUpdate.admissionDate));
+      }
+      if(dataToUpdate.declarationDate) {
+         dataToUpdate.declarationDate = Timestamp.fromDate(new Date(dataToUpdate.declarationDate));
+      } else {
+         delete dataToUpdate.declarationDate;
       }
       
       const profileRef = doc(db, 'admissions', studentProfile.uid);
